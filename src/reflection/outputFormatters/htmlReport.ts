@@ -199,10 +199,10 @@ export async function getLiteralTranslation(
     fromLanguage: string | null,
     toLanguage: string | null
 ): Promise<string> {
-    if (fromLanguage === toLanguage) return text;
+    if (fromLanguage === toLanguage){ return text; }
 
-    if (!toLanguage) throw new Error("to_language is required");
-    if (!client) throw new Error("client is required");
+    if (!toLanguage){ throw new Error("to_language is required"); }
+    if (!client){ throw new Error("client is required"); }
 
     const systemMessage = "You are a translation consultant, drafting literal translations for a Conservative Christian perspective.";
     const userMessageArray: (string | null)[] = ["Translate the following text "];
@@ -395,7 +395,7 @@ async function run(originalContent: Verse[], thisConfig: Config,
     const rGetGrades = (verse: Verse): Array<{ grade: number; comment: string; }> => {
         const translation = rGetTranslation(verse);
         const reflectionLoops = verse.reflection_loops || [];
-        if (!reflectionLoops.length) return [];
+        if (!reflectionLoops.length){ return []; }
         for (let i = reflectionLoops.length - 1; i >= 0; i--) {
             if (reflectionLoops[i].graded_verse === translation) {
                 return reflectionLoops[i].grades || [];
@@ -407,14 +407,14 @@ async function run(originalContent: Verse[], thisConfig: Config,
 
 
     const rGetLabel = async (label: string): Promise<string> => {
-        if (reportLanguage === 'English') return label;
+        if (reportLanguage === 'English'){ return label; }
         return await rGetLabelWrapped(label, reportLanguage);
     };
 
     const labelsCache = path.join(await getFirstWorkspaceFolder(), `${thisConfig.html_reports.cacheFolder}/labels`);
     const rGetLabelWrapped = reflectionUtils.cacheDecorator(labelsCache, client !== null)(
         async (label: string, toLanguage: string): Promise<string> => {
-            if (toLanguage === 'English') return label;
+            if (toLanguage === 'English'){ return label; }
 
             const systemMessage = 'You are a translation consultant, creating labels in a target language';
             const userMessageArray = [
@@ -423,7 +423,7 @@ async function run(originalContent: Verse[], thisConfig: Config,
             ];
             const userMessage = userMessageArray.join('');
 
-            if (!client) return label;
+            if (!client){ return label; }
 
             const LabelResponseSchema = z.object({
                 translated_label: z.string()
@@ -468,7 +468,7 @@ async function run(originalContent: Verse[], thisConfig: Config,
     );
 
     const rGetLiteralTranslation = async (text: string, fromLanguage: string | null = null, toLanguage: string | null = null): Promise<string> => {
-        if (!client) return text;
+        if (!client){ return text; }
         toLanguage = (toLanguage || thisConfig.reports?.report_language || 'English') as string;
         if (thisConfig.html_reports?.hide_source_language_in_back_translations) {
             fromLanguage = null;
