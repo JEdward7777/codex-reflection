@@ -758,7 +758,7 @@ function findClosestReference(
 ): { reference: string; distance: number; } {
     const closestMatch = translationInput.reduce((closest: { reference: string; distance: number; }, verse) => {
         const reference = reflectionUtils.lookUpKey(verse, referenceKey) as string | undefined;
-        if (!reference) return closest; // skip if reference is undefined
+        if (!reference){ return closest; } // skip if reference is undefined
 
         const distance = reflectionUtils.levenshtein(targetReference.toLowerCase(), reference.toLowerCase());
         if (distance < closest.distance) {
@@ -923,7 +923,7 @@ export async function runConfigLowestGradePriority(
 
                 const vref = reflectionUtils.lookUpKey(verse, referenceKey) as string;
 
-                if (vref != null && !(vref in overRiddenReferences)) {
+                if (vref !== null && !(vref in overRiddenReferences)) {
                     // Adaptation pass
                     if (await runAdaptationPass(verse, client, config)) {
                         outputDirty = true;
@@ -1081,9 +1081,9 @@ export async function runConfigLowestGradePriority(
                             }
 
                             const vref = reflectionUtils.lookUpKey(verse, referenceKey) as string;
-                            if (vref != null && !(vref in overRiddenReferences) && !verseIsFinalized(verse)) {
+                            if (vref !== null && !(vref in overRiddenReferences) && !verseIsFinalized(verse)) {
                                 const verseGrade = computeVerseGrade(verse, config);
-                                if (verseGrade != null) {
+                                if (verseGrade !== null) {
                                     if (lowestGradeFound === null || lowestGradeFound > verseGrade) {
                                         lowestGradeFound = verseGrade;
                                         lowestGradedVerse = verse;
@@ -1108,7 +1108,7 @@ export async function runConfigLowestGradePriority(
                         actionDone = `lowest unfinalized grade ${lowestGradeFound} is above highest grade to reflect ${config.highest_grade_to_reflect
                             }`;
                         done = true;
-                    } else if (lowestGradedVerse != null) {
+                    } else if (lowestGradedVerse !== null) {
                         selectedVerse = lowestGradedVerse;
 
                         if (verseNeedsFinalization(selectedVerse, config)) {

@@ -17,12 +17,14 @@
         {
           "id": "codex-reflection-panel",
           "name": "Reflection Reports",
+          "icon": "$(mirror)",
           "when": "codex-editor-extension.showReflectionPanel"
         },
         {
           "type": "webview",
           "id": "codex-reflection.logsView",
           "name": "Logs",
+          "icon": "$(output)",
           "when": "true"
         }
       ]

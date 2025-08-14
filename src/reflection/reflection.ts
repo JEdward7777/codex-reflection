@@ -1,5 +1,5 @@
 import * as vscode from "vscode";
-import { WorkerMessage } from '@/reflection/reflectionTypes';
+import { WorkerMessage } from './reflectionTypes';
 import * as path from 'path';
 import { Worker } from 'worker_threads';
 
