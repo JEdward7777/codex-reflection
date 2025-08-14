@@ -26,19 +26,19 @@ export function activate(context: vscode.ExtensionContext) {
 		vscode.window.showInformationMessage('Hello World from codex-reflection!');
 	}));
 
-	//Register the command codex-editor-extension.reflect.
+	//Register the command codex-reflection.reflect.
 	try {
 		context.subscriptions.push(
-			vscode.commands.registerCommand("codex-editor-extension.reflect", startReflectionWorker)
+			vscode.commands.registerCommand("codex-reflection.reflect", startReflectionWorker)
 		);
 	} catch (error) {
 		console.error("Error during refection extension activation:", error);
 	}
 
-	// //Register the quick test command codex-editor-extension.quick-test.
+	// //Register the quick test command codex-reflection.quick-test.
 	// try {
 	// 	context.subscriptions.push(
-	// 		vscode.commands.registerCommand("codex-editor-extension.quick-test", quickTest)
+	// 		vscode.commands.registerCommand("codex-reflection.quick-test", quickTest)
 	// 	);
 	// } catch (error) {
 	// 	console.error("Error during quick test extension activation:", error);
@@ -71,7 +71,7 @@ export function activate(context: vscode.ExtensionContext) {
 		setReflectionLogsWebviewProvider(logsWebviewProvider);
 
 		// Set context to show the reflection panel
-		vscode.commands.executeCommand('setContext', 'codex-editor-extension.showReflectionPanel', true);
+		vscode.commands.executeCommand('setContext', 'codex-reflection.showReflectionPanel', true);
 
 		// Register reflection commands
 		context.subscriptions.push(

@@ -724,7 +724,7 @@ async function loadApiKeys(): Promise<{ [key: string]: any; }> {
 }
 
 async function setGuiConfigs(apiKeys: { [key: string]: any; }, reflectionConfig: Config): Promise<[{ [key: string]: any; }, Config]> {
-    const openAIKey = await getConfigurationOption('codex-editor-extension.reflection.openAIKey');
+    const openAIKey = await getConfigurationOption('codex-reflection.openAIKey');
     if (openAIKey && typeof openAIKey === 'string' && openAIKey.length > 0) {
         if (typeof apiKeys.guiConfig !== 'object' || apiKeys.guiConfig === null) {
             apiKeys.guiConfig = {};
@@ -735,15 +735,15 @@ async function setGuiConfigs(apiKeys: { [key: string]: any; }, reflectionConfig:
     if (target_language && typeof target_language === 'string' && target_language.length > 0) {
         reflectionConfig.target_language = target_language;
     }
-    const first_verse_ref = await getConfigurationOption('codex-editor-extension.reflection.firstVerseRef');
+    const first_verse_ref = await getConfigurationOption('codex-reflection.firstVerseRef');
     if (first_verse_ref && typeof first_verse_ref === 'string' && first_verse_ref.length > 0) {
         reflectionConfig.first_verse_ref = first_verse_ref;
     }
-    const last_verse_ref = await getConfigurationOption('codex-editor-extension.reflection.lastVerseRef');
+    const last_verse_ref = await getConfigurationOption('codex-reflection.lastVerseRef');
     if (last_verse_ref && typeof last_verse_ref === 'string' && last_verse_ref.length > 0) {
         reflectionConfig.last_verse_ref = last_verse_ref;
     }
-    const translation_objective = await getConfigurationOption('codex-editor-extension.reflection.translationObjective');
+    const translation_objective = await getConfigurationOption('codex-reflection.translationObjective');
     if (translation_objective && typeof translation_objective === 'string' && translation_objective.length > 0) {
         reflectionConfig.translation_objective = translation_objective;
     }

@@ -17,7 +17,7 @@ export function setReflectionLogsWebviewProvider(provider: any) {
 }
 
 export async function quickTest() {
-    const config = vscode.workspace.getConfiguration('codex-editor-extension');
+    const config = vscode.workspace.getConfiguration('codex-reflection');
 }
 
 export function startReflectionWorker() {

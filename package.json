@@ -18,7 +18,7 @@
           "id": "codex-reflection-panel",
           "name": "Reflection Reports",
           "icon": "$(mirror)",
-          "when": "codex-editor-extension.showReflectionPanel"
+          "when": "codex-reflection.showReflectionPanel"
         },
         {
           "type": "webview",
@@ -70,7 +70,7 @@
         "title": "Hello World"
       },
       {
-        "command": "codex-editor-extension.reflect",
+        "command": "codex-reflection.reflect",
         "title": "Reflect"
       },
       {
@@ -101,27 +101,27 @@
     ],
     "configuration": [
       {
-        "title": "Codex-Reflection Extension",
+        "title": "Codex-Reflection",
         "properties": {
-          "codex-editor-extension.reflection.openAIKey": {
+          "codex-reflection.openAIKey": {
             "displayName": "Reflection API Key",
             "type": "string",
             "default": "",
             "description": "The OpenAI API key to use for reflection."
           },
-          "codex-editor-extension.reflection.firstVerseRef": {
+          "codex-reflection.firstVerseRef": {
             "title": "First content ID ised in Reflection",
             "type": "string",
             "default": "",
             "description": "The first id use in reflection.  Set blank to start at the beginning."
           },
-          "codex-editor-extension.reflection.lastVerseRef": {
+          "codex-reflection.lastVerseRef": {
             "title": "Last content ID used in Reflection",
             "type": "string",
             "default": "",
             "description": "The last id to use for reflection. Set blank to continue on to the end."
           },
-          "codex-editor-extension.reflection.translationObjective": {
+          "codex-reflection.translationObjective": {
             "title": "Translation Objective",
             "type": "string",
             "default": "Purpose: This translation is designed to support Bible translation efforts by providing a clear, accurate, and accessible text in {target_language}. Here are key criteria to assess the translation quality of individual verses:\nLiteral Faithfulness: The translation should closely mirror the source language, preserving the structure and phrasing to the extent possible without compromising clarity.\nClarity and Simplicity: The language used should be straightforward and easy to understand, avoiding complex or archaic terms to ensure accessibility for a broad audience.\nConsistency in Terminology: Key terms and theological concepts should be translated uniformly throughout the text to maintain coherence and aid in comprehension.\nMinimal Interpretive Bias: The translation should avoid inserting interpretive or doctrinal biases, allowing readers to engage with the text without undue influence from the translator's perspective.\nSupport for Exegetical Work: The translation should serve as a reliable foundation for further study, teaching, and translation, providing a text that is both accurate and conducive to in-depth analysis.",
