@@ -1,71 +1,137 @@
-# codex-reflection README
+# Codex Reflection
 
-This is the README for your extension "codex-reflection". After writing up a brief description, we recommend including the following sections.
+Codex Reflection is a VSCodium extension that adds AI-powered quality review to the existing Codex Editor translation environment. It uses multiple grading passes from an LLM to assess translations, summarize suggested improvements, and iteratively apply them (up to 10 rounds) to produce higher-quality suggestions.
+
+## Overview
+
+The reflection process works by:
+1. Running multiple grading passes on translation content to get more stable scores than single evaluations
+2. Summarizing corrections from different grading passes
+3. Self-executing those corrections on the original translation
+4. Running new rounds of grading in an iterative improvement cycle
+5. Limiting iterations to 10 rounds and selecting the best-graded result
+
+The plugin emphasizes **quality checking** and grading of existing translations, with AI-suggested alternative translations available as a secondary feature. This approach addresses translator concerns about AI-assisted translation by focusing on review and assessment rather than replacement.
 
 ## Features
 
-Describe specific features of your extension including screenshots of your extension in action. Image paths are relative to this README file.
-
-For example if there is an image subfolder under your extension project workspace:
-
-\!\[feature X\]\(images/feature-x.png\)
-
-> Tip: Many popular extensions utilize animations. This is an excellent way to show off your extension! We recommend short, focused animations that are easy to follow.
+- **Multi-pass LLM Grading**: Uses multiple evaluation rounds for more stable and reliable quality scores
+- **Iterative Improvement**: Automatically applies suggested corrections and re-evaluates up to 10 times
+- **Integration with Codex Editor**: Seamlessly works with existing `.codex` translation projects
+- **Configurable Range**: Process specific verse ranges to control scope and costs
+- **Customizable Objectives**: Adjust translation goals and grading criteria
+- **HTML Report Generation**: Creates detailed reports with heatmaps highlighting low-scoring sections
+- **Multiple Viewing Options**: View reports in VSCodium webview or external browser
+- **Real-time Logging**: Monitor the reflection process with live output logs
+- **Export Functionality**: Save and share portable HTML reports
 
 ## Requirements
 
-If you have any requirements or dependencies, add a section describing those and how to install and configure them.
+- **VSCodium** (not targeting VSCode marketplace - uses Open VSX Registry)
+- **Codex Editor Extension**: While technically optional, this plugin is designed to work with translation projects managed by [Codex Editor](https://docs.codexeditor.app/docs)
+- **OpenAI API Key**: Required for LLM grading functionality
 
-## Extension Settings
+## Installation
 
-Include if your extension adds any VS Code settings through the `contributes.configuration` extension point.
+Install from the Open VSX Registry in VSCodium:
 
-For example:
+1. Open VSCodium
+2. Go to Extensions (Ctrl+Shift+X)
+3. Search for "codex-reflection"
+4. Click Install
 
-This extension contributes the following settings:
+## Configuration
 
-* `myExtension.enable`: Enable/disable this extension.
-* `myExtension.thing`: Set to `blah` to do something.
+Before using Codex Reflection, configure these settings in VSCodium:
+
+### Required Settings
+
+- **`codex-reflection.openAIKey`**: Your OpenAI API key for LLM access
+  - This is separate from any Codex Editor API key to allow independent cost tracking
+
+### Optional Settings
+
+- **`codex-reflection.firstVerseRef`**: Starting verse reference (e.g., "MAT 1:1")
+  - Leave blank to start from the beginning
+  - Use this to limit reflection scope and control costs
+
+- **`codex-reflection.lastVerseRef`**: Ending verse reference (e.g., "MAT 2:1")  
+  - Leave blank to continue to the end
+  - Recommended for initial testing to avoid unexpected costs
+
+- **`codex-reflection.translationObjective`**: Customize the grading criteria and translation purpose
+  - Default objective is optimized for literal translations
+  - Modify to match your specific translation goals and target audience
+
+## Usage
+
+1. **Open a Translation Project**: Use Codex Editor to open or create a `.codex` translation project
+
+2. **Configure Settings**: Set your OpenAI API key and optionally define verse ranges and translation objectives
+
+3. **Open Reflection Panel**: Click the mirror icon in the Activity Bar (alongside Explorer, Run and Debug, etc.)
+
+4. **Start Reflection**: Click the play button (▶) next to "Start Reflection"
+
+5. **Monitor Progress**: Watch the "Reflection Logs" section for real-time process updates
+
+6. **Review Reports**: Once complete, reports appear in the "Reports" section (one per book)
+
+### Report Actions
+
+Each report provides three viewing options:
+- **Export Report** (📤): Save the HTML report file
+- **Open in Browser** (🌐): View in your default web browser  
+- **Open in Webview** (🔍): View within VSCodium's integrated webview
+
+## How It Works
+
+The reflection process operates on translation content by:
+
+1. **Initial Grading**: Multiple LLM passes evaluate the current translation quality
+2. **Correction Summary**: Aggregates and summarizes suggested improvements
+3. **Self-Correction**: Applies corrections to create an improved version
+4. **Re-evaluation**: Grades the improved version
+5. **Iteration**: Repeats steps 2-4 up to 10 times or until quality stabilizes
+6. **Best Selection**: Chooses the highest-graded version from all iterations
+7. **Report Generation**: Creates an HTML report with heatmap visualization
+
+## File Formats
+
+- Works with **`.codex`** files (Codex Editor translation projects)
+- Processes **`.source`** files (source translation references)
+- Generates **`.html`** reports (viewable in browser or webview)
+
+## Cost Considerations
+
+Since this plugin makes multiple LLM API calls per verse, costs can accumulate quickly. We recommend:
+
+- Start with small verse ranges using `firstVerseRef` and `lastVerseRef`
+- Monitor your OpenAI API usage
+- Test with a few verses before processing entire books
+- Use a separate API key to track reflection costs independently
 
 ## Known Issues
 
-Calling out known issues can help limit users opening duplicate issues against your extension.
+- Currently supports OpenAI models only
+- Processing large ranges can be time-intensive and costly
+- Reports are generated per book (not customizable ranges yet)
 
-## Release Notes
+## Roadmap
 
-Users appreciate release notes as you update your extension.
+- Support for additional LLM providers
+- More report format options
+- Advanced configuration options
+- Performance optimizations
 
-### 1.0.0
+## Support
 
-Initial release of ...
+For Codex Editor documentation and general translation workflow guidance, visit: https://docs.codexeditor.app/docs
 
-### 1.0.1
+## License
 
-Fixed issue #.
+[Add your license information here]
 
-### 1.1.0
+## Contributing
 
-Added features X, Y, and Z.
-
----
-
-## Following extension guidelines
-
-Ensure that you've read through the extensions guidelines and follow the best practices for creating your extension.
-
-* [Extension Guidelines](https://code.visualstudio.com/api/references/extension-guidelines)
-
-## Working with Markdown
-
-You can author your README using Visual Studio Code. Here are some useful editor keyboard shortcuts:
-
-* Split the editor (`Cmd+\` on macOS or `Ctrl+\` on Windows and Linux).
-* Toggle preview (`Shift+Cmd+V` on macOS or `Shift+Ctrl+V` on Windows and Linux).
-* Press `Ctrl+Space` (Windows, Linux, macOS) to see a list of Markdown snippets.
-
-## For more information
-
-* [Visual Studio Code's Markdown Support](http://code.visualstudio.com/docs/languages/markdown)
-* [Markdown Syntax Reference](https://help.github.com/articles/markdown-basics/)
-
-**Enjoy!**
+[Add contribution guidelines here]
