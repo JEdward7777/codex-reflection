@@ -2,10 +2,6 @@ import * as vscode from "vscode";
 import { WorkerMessage } from '@/reflection/reflectionTypes';
 import * as path from 'path';
 import { Worker } from 'worker_threads';
-import { z } from "zod";
-import { callLLM } from "@/utils/llmUtils";
-import { ChatMessage } from "@types";
-import { zodResponseFormat } from "openai/helpers/zod";
 
 
 let reflectionWorker: Worker | null = null;

@@ -12,10 +12,134 @@
   "activationEvents": [],
   "main": "./dist/extension.js",
   "contributes": {
+    "views": {
+      "codex-reflection-view": [
+        {
+          "id": "codex-reflection-panel",
+          "name": "Reflection Reports",
+          "when": "codex-editor-extension.showReflectionPanel"
+        },
+        {
+          "type": "webview",
+          "id": "codex-reflection.logsView",
+          "name": "Logs",
+          "when": "true"
+        }
+      ]
+    },
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "codex-reflection-view",
+          "title": "Reflection",
+          "icon": "$(mirror)"
+        }
+      ]
+    },
+    "menus": {
+      "view/title": [
+        {
+          "command": "codex-reflection.refresh",
+          "when": "view == codex-reflection-panel",
+          "group": "navigation"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "codex-reflection.openReport",
+          "when": "view == codex-reflection-panel && viewItem == report",
+          "group": "inline"
+        },
+        {
+          "command": "codex-reflection.openReportInBrowser",
+          "when": "view == codex-reflection-panel && viewItem == report",
+          "group": "inline"
+        },
+        {
+          "command": "codex-reflection.exportReport",
+          "when": "view == codex-reflection-panel && viewItem == report",
+          "group": "inline"
+        }
+      ]
+    },
     "commands": [
       {
         "command": "codex-reflection.helloWorld",
         "title": "Hello World"
+      },
+      {
+        "command": "codex-editor-extension.reflect",
+        "title": "Reflect"
+      },
+      {
+        "command": "codex-reflection.startReflection",
+        "title": "Start Reflection",
+        "icon": "$(play)"
+      },
+      {
+        "command": "codex-reflection.openReport",
+        "title": "Open Report",
+        "icon": "$(open-preview)"
+      },
+      {
+        "command": "codex-reflection.openReportInBrowser",
+        "title": "Open in Browser",
+        "icon": "$(globe)"
+      },
+      {
+        "command": "codex-reflection.exportReport",
+        "title": "Export Report",
+        "icon": "$(export)"
+      },
+      {
+        "command": "codex-reflection.refresh",
+        "title": "Refresh",
+        "icon": "$(refresh)"
+      }
+    ],
+    "configuration": [
+      {
+        "title": "Codex-Reflection Extension",
+        "properties": {
+          "codex-editor-extension.reflection.openAIKey": {
+            "displayName": "Reflection API Key",
+            "type": "string",
+            "default": "",
+            "description": "The OpenAI API key to use for reflection."
+          },
+          "codex-editor-extension.reflection.firstVerseRef": {
+            "title": "First content ID ised in Reflection",
+            "type": "string",
+            "default": "",
+            "description": "The first id use in reflection.  Set blank to start at the beginning."
+          },
+          "codex-editor-extension.reflection.lastVerseRef": {
+            "title": "Last content ID used in Reflection",
+            "type": "string",
+            "default": "",
+            "description": "The last id to use for reflection. Set blank to continue on to the end."
+          },
+          "codex-editor-extension.reflection.translationObjective": {
+            "title": "Translation Objective",
+            "type": "string",
+            "default": "Purpose: This translation is designed to support Bible translation efforts by providing a clear, accurate, and accessible text in {target_language}. Here are key criteria to assess the translation quality of individual verses:\nLiteral Faithfulness: The translation should closely mirror the source language, preserving the structure and phrasing to the extent possible without compromising clarity.\nClarity and Simplicity: The language used should be straightforward and easy to understand, avoiding complex or archaic terms to ensure accessibility for a broad audience.\nConsistency in Terminology: Key terms and theological concepts should be translated uniformly throughout the text to maintain coherence and aid in comprehension.\nMinimal Interpretive Bias: The translation should avoid inserting interpretive or doctrinal biases, allowing readers to engage with the text without undue influence from the translator's perspective.\nSupport for Exegetical Work: The translation should serve as a reliable foundation for further study, teaching, and translation, providing a text that is both accurate and conducive to in-depth analysis.",
+            "description": "The objective for the translation, used by the reflection process.",
+            "editPresentation": "multilineText"
+          }
+        }
+      }
+    ],
+    "customEditors": [
+      {
+        "viewType": "codex.reflectionReportViewer",
+        "displayName": "Reflection Report Viewer",
+        "selector": [
+          {
+            "filenamePattern": "*.html",
+            "scheme": "file"
+          }
+        ],
+        "priority": "option"
       }
     ]
   },
@@ -43,5 +167,9 @@
     "webpack-cli": "^6.0.1",
     "@vscode/test-cli": "^0.0.10",
     "@vscode/test-electron": "^2.5.2"
+  },
+  "dependencies": {
+    "openai": "^4.67.3",
+    "zod": "^3.25.20"
   }
 }
