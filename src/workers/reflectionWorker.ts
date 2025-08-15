@@ -8,12 +8,27 @@ import * as reflectionUtils from '../reflection/reflectionUtils';
 import { getFirstWorkspaceFolder, getConfigurationOption, postMessageAndShowError, postMessageAndShowInfo } from "@/reflection/workerUtils";
 import { run as runHtmlReport } from '../reflection/outputFormatters/htmlReport';
 
+// Helper function to serialize arguments properly, especially Error objects
+function serializeArg(arg: any): string {
+    if (arg instanceof Error) {
+        // Handle Error objects specially to include message and stack
+        return `${arg.name}: ${arg.message}${arg.stack ? '\n' + arg.stack : ''}`;
+    } else if (typeof arg === 'object' && arg !== null) {
+        try {
+            return JSON.stringify(arg, null, 2);
+        } catch (e) {
+            // Fallback for objects that can't be stringified
+            return String(arg);
+        }
+    } else {
+        return String(arg);
+    }
+}
+
 // Intercept console.log to send messages to the panel
 const originalConsoleLog = console.log;
 console.log = (...args: any[]) => {
-    const message = args.map(arg =>
-        typeof arg === 'object' ? JSON.stringify(arg, null, 2) : String(arg)
-    ).join(' ');
+    const message = args.map(serializeArg).join(' ');
 
     // Send to panel
     if (parentPort) {
@@ -34,9 +49,7 @@ console.log = (...args: any[]) => {
 // Also intercept console.error
 const originalConsoleError = console.error;
 console.error = (...args: any[]) => {
-    const message = args.map(arg =>
-        typeof arg === 'object' ? JSON.stringify(arg, null, 2) : String(arg)
-    ).join(' ');
+    const message = args.map(serializeArg).join(' ');
 
     // Send to panel
     if (parentPort) {
