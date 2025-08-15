@@ -64,6 +64,20 @@ Before using Codex Reflection, configure these settings for Codex Reflection:
   - Default objective is optimized for literal translations
   - Modify to match your specific translation goals and target audience
 
+## Accessing Settings
+
+To configure the Codex Reflection settings:
+
+1. **Open Settings**:
+   - **Keyboard Shortcut**: `Ctrl + ,` (Control + Comma)
+   - **Menu Navigation**: Go to `File` → `Preferences` → `Settings`
+   - **Command Palette**: Press `Ctrl + Shift + P`, type "Preferences: Open Settings", and press Enter
+
+2. **Find Codex Reflection Settings**:
+   - In the Settings UI, search for "codex-reflection" in the search box
+   - All extension-specific settings will be displayed
+   - Click on "Extensions" in the sidebar, then select "Codex-Reflection" to see all available settings
+
 ## Usage
 
 1. **Open a Translation Project**: Use Codex Editor to open or create a translation project
