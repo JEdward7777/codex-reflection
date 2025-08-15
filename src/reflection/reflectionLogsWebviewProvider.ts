@@ -4,20 +4,29 @@ export class ReflectionLogsWebviewProvider implements vscode.WebviewViewProvider
     public static readonly viewType = 'codex-reflection.logsView';
 
     private _view?: vscode.WebviewView;
-    private logMessages: Array<{ message: string; level: string; timestamp: string }> = [];
-    private readonly maxLogMessages = 1000; // Keep last 1000 log messages
+    private logMessages: Array<{ message: string; level: string; timestamp: string; }> = [];
+    private readonly maxLogMessages = 100; // Keep last 100 log messages to prevent webview crashes
+    private updateWebviewTimeout: NodeJS.Timeout | null = null;
+    private readonly updateWebviewDelay = 100; // 100ms debounce delay
 
     constructor(
         private readonly _extensionUri: vscode.Uri,
-    ) {}
+    ) { }
 
-    public addLogMessage(logData: { message: string; level: string; timestamp: string }): void {
+    public addLogMessage(logData: { message: string; level: string; timestamp: string; }): void {
         this.logMessages.unshift(logData);
         // Keep only the last maxLogMessages
         if (this.logMessages.length > this.maxLogMessages) {
             this.logMessages = this.logMessages.slice(0, this.maxLogMessages);
         }
-        this.updateWebview();
+        // Debounce updateWebview calls - if a timeout is already scheduled, clear it and schedule a new one
+        if (this.updateWebviewTimeout) {
+            clearTimeout(this.updateWebviewTimeout);
+        }
+        this.updateWebviewTimeout = setTimeout(() => {
+            this.updateWebview();
+            this.updateWebviewTimeout = null;
+        }, this.updateWebviewDelay);
     }
 
     public clearLogMessages(): void {
@@ -27,6 +36,14 @@ export class ReflectionLogsWebviewProvider implements vscode.WebviewViewProvider
 
     public getLogMessages(): Array<{ message: string; level: string; timestamp: string }> {
         return [...this.logMessages]; // Return a copy
+    }
+
+    public dispose(): void {
+        // Clean up any pending timeout to prevent memory leaks
+        if (this.updateWebviewTimeout) {
+            clearTimeout(this.updateWebviewTimeout);
+            this.updateWebviewTimeout = null;
+        }
     }
 
     public resolveWebviewView(

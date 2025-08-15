@@ -721,11 +721,14 @@ async function updateReflectionFilesAndTimes(config: Config) {
 
 async function loadConfig() {
     const configFile = path.join(await getFirstWorkspaceFolder(), '.project/reflection/reflectionConfig.json');
-    const data = await fsPromises.readFile(configFile, 'utf-8');
-    const config = JSON.parse(data) as Config;
-    return config;
+    try {
+        const data = await fsPromises.readFile(configFile, 'utf-8');
+        const config = JSON.parse(data) as Config;
+        return config;
+    } catch (error) {
+        return {};
+    }
 }
-
 async function loadApiKeys(): Promise<{ [key: string]: any; }> {
     const apiKeysFile = path.join(await getFirstWorkspaceFolder(), '.project/reflection/apiKeys.json');
     try {
@@ -805,7 +808,7 @@ async function runProcess() {
         let apiKeys = await loadApiKeys();
         const { saveTimeout = 20 } = config;
 
-        let reflectionConfig = config?.configs?.reflection;
+        let reflectionConfig = config?.configs?.reflection ?? {};
         [apiKeys, reflectionConfig] = await setGuiConfigs(apiKeys, reflectionConfig);
         reflectionConfig = await setConfigDefaults(reflectionConfig);
 
