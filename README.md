@@ -1,6 +1,6 @@
 # Codex Reflection
 
-Codex Reflection is a VSCodium extension that adds AI-powered quality review to the existing Codex Editor translation environment. It uses multiple grading passes from an LLM to assess translations, summarize suggested improvements, and iteratively apply them until the grade reaches 90 in the generated suggestion or a maximum of 10 rounds is reached.
+Codex Reflection is a VSCodium extension that adds AI-powered quality review to the existing Codex Editor translation environment. It uses multiple grading passes from an LLM to assess translations, summarize suggested improvements, and iteratively apply them until the grade reaches 90 in the generated suggestions or a maximum of 10 rounds are reached.
 
 ## Overview
 
@@ -9,14 +9,14 @@ The reflection process works by:
 2. Summarizing corrections from different grading passes
 3. Self-executing those corrections on the original translation
 4. Running new rounds of grading in an iterative improvement cycle
-5. Stopping the iterations once the suggested translation reaches a grade of 90 or hitting 10 rounds and suggesting the best-graded result
+5. Stopping the iterations once the suggested translation reaches a grade of 90 or after 10 rounds, suggesting the best-graded result
 
-The plugin emphasizes **quality checking** and grading of existing translations, with AI-suggested alternative translations available as a secondary feature leaving the translator as the primary decision maker and driver of the translation process.
+The plugin emphasizes **quality checking** and grading of existing translations, with AI-suggested alternative translations available as a secondary feature leaving the translator as the primary decision-maker and driver of the translation process.
 
 ## Features
 
 - **Multi-pass LLM Grading**: Uses multiple evaluation rounds for more stable and reliable quality scores
-- **Iterative Improvement**: Automatically self applies generated corrections to produce a suggested translation iterateing up to 10 times
+- **Iterative Improvement**: Automatically self applies generated corrections to produce a suggested translation iterating up to 10 times
 - **Integration with Codex Editor**: Seamlessly works with existing `.codex` files and comments in the codex translation project
 - **Configurable Range**: Allows limiting the reflection scope to a specific verse ranges to control cost and focus
 - **Customizable Objectives**: Adjust translation goals and grading criteria
@@ -82,7 +82,7 @@ Before using Codex Reflection, configure these settings for Codex Reflection:
 
 Each report provides three viewing options:
 - **Export Report**: Save the HTML report file
-- **Open in Browser**: View in your default web browser  
+- **Open in Browser**: View in your default web browser
 - **Open in Webview**: View within Codex Editor's integrated webview
 
 ## How It Works
@@ -111,7 +111,7 @@ Since this plugin makes multiple LLM API calls per verse, costs can accumulate q
 - Start with small verse ranges using `firstVerseRef` and `lastVerseRef`
 - Monitor your OpenAI API usage
 - Test with a few chapters before processing entire books
-- Use a separate API key to track reflection costs independent of the general Codex Editor Ai functionality.
+- Use a separate API key to track reflection costs independent of the general Codex Editor AI functionality.
 
 **Cost Optimization**: The reflection process is designed to be cost-effective. When you edit a verse and rerun the reflection, only the work related to that verse is processed, not the entire project. Additionally, if you add or remove a comment from a verse, only that verse's reflection will be redone. This means you won't be charged for reprocessing unchanged content.
 
