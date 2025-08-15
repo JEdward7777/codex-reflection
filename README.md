@@ -96,6 +96,8 @@ The reflection process operates on translation content by:
 5. **Iteration**: Repeats steps 2-4 up to 10 times or until the grade reaches 90
 6. **Report Generation**: Creates an HTML report with heatmap visualization with the suggested corrections and suggested translations.
 
+**Smart Processing**: The reflection process is optimized to only reprocess verses that have been modified or have changed comments. When you edit a verse and rerun the reflection, only the work related to that verse is processed, not the entire project. Similarly, adding or removing a comment from a verse will trigger reprocessing only for that verse.
+
 ## File Formats
 
 - Works with **`.codex`** files (Codex Editor translation target files)
@@ -110,6 +112,8 @@ Since this plugin makes multiple LLM API calls per verse, costs can accumulate q
 - Monitor your OpenAI API usage
 - Test with a few chapters before processing entire books
 - Use a separate API key to track reflection costs independent of the general Codex Editor Ai functionality.
+
+**Cost Optimization**: The reflection process is designed to be cost-effective. When you edit a verse and rerun the reflection, only the work related to that verse is processed, not the entire project. Additionally, if you add or remove a comment from a verse, only that verse's reflection will be redone. This means you won't be charged for reprocessing unchanged content.
 
 ## Known Issues
 
