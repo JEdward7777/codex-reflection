@@ -64,6 +64,13 @@ Before using Codex Reflection, configure these settings for Codex Reflection:
   - Default objective is optimized for literal translations
   - Modify to match your specific translation goals and target audience
 
+- **`codex-project-manager.targetLanguage.refName`**: Target language of the translation (i.e., the language the content is translated into).
+  - The reflection process honors this setting when grading the target translations and when forming alternative suggested translations.
+
+- **`codex-editor-extension.main_chat_language`**: Language setting from the Codex Editor extension that sets the language of the chat agent.  
+  - The Chat Agent itself may or may not still exist.
+  - This setting is used to also set the language of the comments in the reflection reports. 
+
 ## Accessing Settings
 
 To configure the Codex Reflection settings:
