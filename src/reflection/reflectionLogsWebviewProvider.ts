@@ -7,7 +7,7 @@ export class ReflectionLogsWebviewProvider implements vscode.WebviewViewProvider
     private logMessages: Array<{ message: string; level: string; timestamp: string; }> = [];
     private readonly maxLogMessages = 100; // Keep last 100 log messages to prevent webview crashes
     private updateWebviewTimeout: NodeJS.Timeout | null = null;
-    private readonly updateWebviewDelay = 100; // 100ms debounce delay
+    private readonly updateWebviewDelay = 200; // debounce delay in ms
 
     constructor(
         private readonly _extensionUri: vscode.Uri,
@@ -17,7 +17,7 @@ export class ReflectionLogsWebviewProvider implements vscode.WebviewViewProvider
         this.logMessages.push(logData);
         // Keep only the last maxLogMessages
         if (this.logMessages.length > this.maxLogMessages) {
-            this.logMessages = this.logMessages.slice(0, this.maxLogMessages);
+            this.logMessages = this.logMessages.slice(-this.maxLogMessages);
         }
         // If an update is not already scheduled, schedule one
         if (this.updateWebviewTimeout === null) {
