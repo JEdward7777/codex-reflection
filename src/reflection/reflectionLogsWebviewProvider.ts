@@ -19,14 +19,16 @@ export class ReflectionLogsWebviewProvider implements vscode.WebviewViewProvider
         if (this.logMessages.length > this.maxLogMessages) {
             this.logMessages = this.logMessages.slice(0, this.maxLogMessages);
         }
-        // Debounce updateWebview calls - if a timeout is already scheduled, clear it and schedule a new one
-        if (this.updateWebviewTimeout) {
-            clearTimeout(this.updateWebviewTimeout);
+        // If an update is not already scheduled, schedule one
+        if (this.updateWebviewTimeout === null) {
+            console.log("updateWebviewTimeout not scheduled");
+            this.updateWebviewTimeout = setTimeout(() => {
+                this.updateWebview();
+                this.updateWebviewTimeout = null;
+            }, this.updateWebviewDelay);
+        } else {
+            console.log("updateWebviewTimeout already scheduled");
         }
-        this.updateWebviewTimeout = setTimeout(() => {
-            this.updateWebview();
-            this.updateWebviewTimeout = null;
-        }, this.updateWebviewDelay);
     }
 
     public clearLogMessages(): void {
@@ -34,7 +36,7 @@ export class ReflectionLogsWebviewProvider implements vscode.WebviewViewProvider
         this.updateWebview();
     }
 
-    public getLogMessages(): Array<{ message: string; level: string; timestamp: string }> {
+    public getLogMessages(): Array<{ message: string; level: string; timestamp: string; }> {
         return [...this.logMessages]; // Return a copy
     }
 
