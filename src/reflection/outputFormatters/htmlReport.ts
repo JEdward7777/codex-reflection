@@ -632,6 +632,7 @@ async function run(originalContent: Verse[], thisConfig: Config,
             top: await rGetLabel("Top"),
             tableOfContents: await rGetLabel("Table of Contents"),
             generatedOn: await rGetLabel("Generated on"),
+            totalScore: await rGetLabel("Total Score"),
             downloadJsonl: await rGetLabel("Download JSONL"),
             gradeHeatMap: await rGetLabel("Grade Heat Map"),
             settings: await rGetLabel("Settings"),
@@ -1234,9 +1235,9 @@ async function run(originalContent: Verse[], thisConfig: Config,
     </div>
 
     <div class="container" id="top">
-        <!-- Debug Information -->
         <h1>${title}</h1>
         <p>${labels.generatedOn}: ${generatedDate}</p>
+        <p>${labels.totalScore}: <span id="total-score"></span></p>
         <button id="download-jsonl">${labels.downloadJsonl}</button>
         
         <div class="heat-map-header">
@@ -1315,6 +1316,11 @@ async function run(originalContent: Verse[], thisConfig: Config,
         decompressData(compressedData).then(reportData => {
             const num_sd_to_report = ${numSdToReport};
             const percentage_sorted = ${percentageSorted ?? 'null'};
+
+            const totalScoreElement = document.getElementById('total-score');
+            const grades = reportData.map(v => v.grade);
+            const averageGrade = grades.length > 0 ? grades.reduce((sum, grade) => sum + grade, 0) / grades.length : 0;
+            totalScoreElement.textContent = averageGrade.toFixed(1);
 
             const lowGradeContent = document.getElementById('low-grade-content');
             const allVersesContent = document.getElementById('all-verses-content');
