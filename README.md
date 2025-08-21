@@ -33,7 +33,7 @@ The plugin emphasizes **quality checking** and grading of existing translations,
 
 ## Installation
 
-Install from the Open VSX Registry in [Codex Translation Editor](https://codexeditor.app/):
+Install from the [Open VSX Registry](https://open-vsx.org/extension/jlansford/codex-reflection) in [Codex Translation Editor](https://codexeditor.app/):
 
 1. Open [Codex Translation Editor](https://codexeditor.app/)
 2. Go to Extensions (Ctrl+Shift+X)
