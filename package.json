@@ -3,7 +3,7 @@
   "publisher": "jlansford",
   "displayName": "codex-reflection",
   "description": "Codex Reflection adds AI-powered quality review to the existing Codex Editor translation environment. It uses multiple grading passes from an LLM to assess translations, summarize suggested improvements, and internally apply them iteratively (up to 10 rounds) to produce higher-quality suggestions. The plugin focuses on grading and quality checking, with suggested alternative translations available as a secondary feature. Once the review process completes, it generates an HTML report with a heatmap that highlights low-scoring sections and allows quick navigation. The portable self contained report is viewable directly in the editor or in an external web browser.",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "repository": {
     "type": "git",
     "url": "https://github.com/JEdward7777/codex-reflection.git"
