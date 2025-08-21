@@ -14,20 +14,20 @@ export class ReflectionLogsWebviewProvider implements vscode.WebviewViewProvider
     ) { }
 
     public addLogMessage(logData: { message: string; level: string; timestamp: string; }): void {
-        this.logMessages.unshift(logData);
+        this.logMessages.push(logData);
         // Keep only the last maxLogMessages
         if (this.logMessages.length > this.maxLogMessages) {
             this.logMessages = this.logMessages.slice(0, this.maxLogMessages);
         }
         // If an update is not already scheduled, schedule one
         if (this.updateWebviewTimeout === null) {
-            console.log("updateWebviewTimeout not scheduled");
+            console.log("debounce: updateWebviewTimeout not scheduled");
             this.updateWebviewTimeout = setTimeout(() => {
                 this.updateWebview();
                 this.updateWebviewTimeout = null;
             }, this.updateWebviewDelay);
         } else {
-            console.log("updateWebviewTimeout already scheduled");
+            console.log("debounce: updateWebviewTimeout already scheduled");
         }
     }
 

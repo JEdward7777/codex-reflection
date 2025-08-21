@@ -17,7 +17,77 @@ export function setReflectionLogsWebviewProvider(provider: any) {
 }
 
 export async function quickTest() {
-    const config = vscode.workspace.getConfiguration('codex-reflection');
+    console.log("debounce: 🧪 Starting addLogMessage test - sending 100 messages at 25ms intervals");
+
+    if (!reflectionLogsWebviewProvider) {
+        vscode.window.showErrorMessage("Logs webview provider not available for testing");
+        console.error("debounce: ❌ reflectionLogsWebviewProvider is null - cannot run test");
+        return;
+    }
+
+    // Clear any existing logs first
+    reflectionLogsWebviewProvider.clearLogMessages();
+    console.log("debounce: 🧹 Cleared existing logs");
+
+    let messageCount = 0;
+    const totalMessages = 100;
+    const intervalMs = 7;
+
+    console.log(`debounce: 📊 Test parameters: ${totalMessages} messages, ${intervalMs}ms intervals`);
+    console.log("debounce: 🚀 Starting message flood...");
+
+    const startTime = Date.now();
+
+    const sendMessage = () => {
+        messageCount++;
+        const timestamp = new Date().toISOString();
+        const logData = {
+            message: `Test message ${messageCount} - Testing debouncing behavior`,
+            level: messageCount % 4 === 0 ? 'ERROR' : messageCount % 3 === 0 ? 'PROGRESS' : messageCount % 2 === 0 ? 'DEBUG' : 'INFO',
+            timestamp: timestamp
+        };
+
+        // Log to console at the same time we send to addLogMessage
+        console.log(`debounce: 📤 [${messageCount}/${totalMessages}] Sending: "${logData.message}" (${logData.level}) at ${timestamp}`);
+
+        // Send to the addLogMessage function
+        reflectionLogsWebviewProvider.addLogMessage(logData);
+
+        if (messageCount < totalMessages) {
+            setTimeout(sendMessage, intervalMs);
+        } else {
+            const endTime = Date.now();
+            const totalTime = endTime - startTime;
+            const expectedTime = totalMessages * intervalMs;
+
+            console.log("debounce: ✅ Test completed!");
+            console.log(`debounce: 📈 Statistics:`);
+            console.log(`debounce:    - Messages sent: ${totalMessages}`);
+            console.log(`debounce:    - Interval: ${intervalMs}ms`);
+            console.log(`debounce:    - Expected total time: ${expectedTime}ms`);
+            console.log(`debounce:    - Actual total time: ${totalTime}ms`);
+            console.log(`debounce:    - Time difference: ${totalTime - expectedTime}ms`);
+
+            // Check final state
+            setTimeout(() => {
+                const finalLogs = reflectionLogsWebviewProvider.getLogMessages();
+                console.log(`debounce: 📋 Final log count in provider: ${finalLogs.length}`);
+                console.log(`debounce: 🔄 Expected max logs (due to limit): ${Math.min(totalMessages, 100)}`);
+
+                if (finalLogs.length > 0) {
+                    console.log(`debounce: 📝 First log: "${finalLogs[0].message}"`);
+                    console.log(`debounce: 📝 Last log: "${finalLogs[finalLogs.length - 1].message}"`);
+                }
+
+                vscode.window.showInformationMessage(
+                    `addLogMessage test completed! Sent ${totalMessages} messages. Check console and logs panel for results.`
+                );
+            }, 200); // Wait a bit for any final debounced updates
+        }
+    };
+
+    // Start the test
+    sendMessage();
 }
 
 export function startReflectionWorker() {
