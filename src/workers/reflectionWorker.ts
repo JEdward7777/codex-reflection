@@ -763,6 +763,13 @@ async function setGuiConfigs(apiKeys: { [key: string]: any; }, reflectionConfig:
     if (translation_objective && typeof translation_objective === 'string' && translation_objective.length > 0) {
         reflectionConfig.translation_objective = translation_objective;
     }
+    const main_chat_language = await getConfigurationOption('codex-editor-extension.main_chat_language');
+    if (main_chat_language && typeof main_chat_language === 'string' && main_chat_language.length > 0) {
+        if (!reflectionConfig.reports) {
+            reflectionConfig.reports = {};
+        }
+        reflectionConfig.reports['report language'] = main_chat_language;
+    }
     return [apiKeys, reflectionConfig];
 }
 
@@ -790,6 +797,10 @@ async function setConfigDefaults(config: Config): Promise<Config> {
         target_language: config.target_language ?? "the target language",
         summarize_corrections: config.summarize_corrections ?? true,
         highest_grade_to_reflect: config.highest_grade_to_reflect ?? 90,
+        reports: {
+            ...config.reports,
+            "report language": config.reports?.["report language"] ?? 'English',
+        },
         html_reports: {
             ...config.html_reports,
             output_folder: config.html_reports?.output_folder ?? "./files/reflection/html_reports",

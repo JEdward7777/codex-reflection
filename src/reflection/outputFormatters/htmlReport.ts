@@ -310,7 +310,7 @@ async function run(originalContent: Verse[], thisConfig: Config,
     const sourceKey: string[] = thisConfig.source_key || ['source'];
 
     const reportFirstIteration: boolean = thisConfig.reports?.report_first_iteration ?? true;
-    const reportLanguage: string = thisConfig.reports?.report_language || 'English';
+    const reportLanguage: string = thisConfig.reports?.['report language'] || 'English';
     let targetLanguage: string | null = thisConfig.markdown_format?.outputs?.target_language || null;
     if (targetLanguage === null) {
         targetLanguage = thisConfig.reports?.target_language || 'English';
@@ -440,7 +440,7 @@ async function run(originalContent: Verse[], thisConfig: Config,
                 response_format: zodResponseFormat(LabelResponseSchema, "LabelResponse")
             });
 
-            const result = LabelResponseSchema.safeParse(completion.choices[0].message.content);
+            const result = LabelResponseSchema.safeParse(JSON.parse(completion.choices[0].message.content as string));
             if (!result.success) {
                 throw new Error(`Error parsing response: ${result.error}`);
             }
@@ -469,7 +469,7 @@ async function run(originalContent: Verse[], thisConfig: Config,
 
     const rGetLiteralTranslation = async (text: string, fromLanguage: string | null = null, toLanguage: string | null = null): Promise<string> => {
         if (!client){ return text; }
-        toLanguage = (toLanguage || thisConfig.reports?.report_language || 'English') as string;
+        toLanguage = (toLanguage || thisConfig.reports?.['report language'] || 'English') as string;
         if (thisConfig.html_reports?.hide_source_language_in_back_translations) {
             fromLanguage = null;
         }
@@ -578,7 +578,7 @@ async function run(originalContent: Verse[], thisConfig: Config,
             htmlName = `${htmlPrefix}${htmlName}`;
         }
         const outputFilename = path.join(outputFolder, `${htmlName}.html`);
-        const title = thisConfig.html_reports?.title?.replace('{book}', book) || `Reflection ${book} Report`;
+        const title = thisConfig.html_reports?.title?.replace('{book}', book) || await rGetLabel(`Reflection ${book} Report`);
 
         const startTime = Date.now();
         for (let verseI = 0; verseI < verses.length; verseI++) {
