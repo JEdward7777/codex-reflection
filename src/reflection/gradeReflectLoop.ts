@@ -800,7 +800,7 @@ function setFirstAndLastLine(translationInput: reflectionUtils.Verse[], config: 
             }
             throw new Error(`The last id ${targetReference} doesn't match any references.`);
         }
-        config.end_line = targetIndex + 1;
+        config.end_line = targetIndex + 2; //+2 so that it is inclusive instead of exclusive for ending.
     }
 }
 
