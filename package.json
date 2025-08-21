@@ -79,6 +79,11 @@
         "icon": "$(play)"
       },
       {
+        "command": "codex-reflection.stopReflection",
+        "title": "Stop Reflection",
+        "icon": "$(stop)"
+      },
+      {
         "command": "codex-reflection.openReport",
         "title": "Open Report",
         "icon": "$(open-preview)"

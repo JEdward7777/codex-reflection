@@ -240,3 +240,21 @@ export function startReflectionWorker() {
 export function isReflectionWorkerRunning(): boolean {
     return reflectionWorker !== null;
 }
+
+export function stopReflectionWorker() {
+    if (reflectionWorker !== null) {
+        console.log("Stopping reflection worker...");
+        reflectionWorker.terminate();
+        reflectionWorker = null;
+        
+        // Notify UI that worker has been stopped
+        if (reflectionTreeProvider) {
+            reflectionTreeProvider.setReflectionRunning(false);
+            reflectionTreeProvider.addStatusMessage('Reflection stopped by user');
+        }
+        
+        console.log("Reflection worker stopped");
+    } else {
+        console.log("No reflection worker running to stop");
+    }
+}

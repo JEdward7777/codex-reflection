@@ -1790,7 +1790,9 @@ async function run(originalContent: Verse[], thisConfig: Config,
 
         const folderPath = path.dirname(outputFilename);
         await fs.promises.mkdir(folderPath, { recursive: true });
-        await fs.promises.writeFile(outputFilename, htmlContent, { encoding: 'utf-8' });
+        const tempFilename = outputFilename + '~';
+        await fs.promises.writeFile(tempFilename, htmlContent, { encoding: 'utf-8' });
+        await fs.promises.rename(tempFilename, outputFilename);
     }
 }
 

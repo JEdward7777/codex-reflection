@@ -13,10 +13,10 @@ export type Verse = { [key: string]: any; };
 export function levenshtein(a: string, b: string) {
     const an = a.length;
     const bn = b.length;
-    if (an == 0) {
+    if (an === 0) {
         return bn;
     }
-    if (bn == 0) {
+    if (bn === 0) {
         return an;
     }
     const matrix = new Array<number[]>(bn + 1);
@@ -382,12 +382,12 @@ export async function loadJson<T>(file: string, defaultValue: T | null = null): 
  * @param data - Data to serialize as JSON
  * @param indent - Number of spaces for JSON indentation (default: 4)
  */
-async function saveJson<T>(filename: string, data: T, indent: number = 4): Promise<void> {
+export async function saveJson<T>(filename: string, data: T, indent: number = 4): Promise<void> {
     const dir = path.dirname(filename);
     try {
         await fsPromises.mkdir(dir, { recursive: true });
     } catch (error: unknown) {
-        if (error instanceof Error && 'code' in error && (error as any).code !== 'EEXIST') throw error;
+        if (error instanceof Error && 'code' in error && (error as any).code !== 'EEXIST'){ throw error; }
     }
 
     const tempFilename = `${filename}~`;

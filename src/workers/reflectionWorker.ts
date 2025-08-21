@@ -96,29 +96,6 @@ interface ReflectionContentItem extends Record<string, unknown> {
 interface ReflectionContent extends Array<ReflectionContentItem> { }
 
 
-
-/**
- * Save a file with one JSON object at the root.
- * @param filename - Path to the output file
- * @param data - JSON-serializable data to save
- * @param indent - Number of spaces for JSON indentation (default: 4)
- */
-async function saveJson(filename: string, data: unknown, indent: number = 4): Promise<void> {
-    const dirname = path.dirname(filename);
-
-    // Create directory if it doesn't exist
-    await fsPromises.mkdir(dirname, { recursive: true });
-
-    const tempFilename = `${filename}~`;
-
-    // Write to temporary file
-    await fsPromises.writeFile(tempFilename, JSON.stringify(data, null, indent), { encoding: 'utf-8' } as fs.WriteFileOptions);
-
-    // Replace the original file with the temporary file
-    await fsPromises.rename(tempFilename, filename);
-}
-
-
 const BOOK_ORDER = [
     "Genesis", "GEN",
     "Exodus", "EXO",
@@ -380,7 +357,7 @@ async function updateObservedModTimes(newModTimes: { [filePath: string]: Date; }
     }
 
     if (changed) {
-        await saveJson(await getObservedModTimesFilePath(), observedModTimes);
+        await reflectionUtils.saveJson(await getObservedModTimesFilePath(), observedModTimes);
     }
     return observedModTimes;
 }
@@ -393,7 +370,7 @@ async function updateUpdatedModTimes(trackingModTimes: { [file: string]: Trackin
         }
     }
     if (changed) {
-        await saveJson(await getObservedModTimesFilePath(), trackingModTimes);
+        await reflectionUtils.saveJson(await getObservedModTimesFilePath(), trackingModTimes);
     }
 }
 
@@ -634,7 +611,7 @@ async function loadCommentsFromFile(filePath: string, config: Config): Promise<s
     }
 
     //save the comments
-    if (touchedIds.length > 0) await saveComments(currentComments, config);
+    if (touchedIds.length > 0) { await saveComments(currentComments, config); }
 
     //Then we need to 
     return touchedIds;
@@ -663,10 +640,10 @@ async function updateReflectionContentFromFile(reflectionContent: ReflectionCont
 
 async function resetVerseTo(verse: reflectionUtils.Verse, text: string): Promise<void> {
     verse.reflection_loops = [];
-    if (verse.reflection_is_finalized) verse.reflection_is_finalized = false;
-    if (verse.reflection_finalized_grade) verse.reflection_finalized_grade = null;
-    if (verse.reflection_finalized_comment) verse.reflection_finalized_comment = null;
-    if (verse.comment_mod_loop_count) verse.comment_mod_loop_count = 0;
+    if (verse.reflection_is_finalized) { verse.reflection_is_finalized = false; }
+    if (verse.reflection_finalized_grade) { verse.reflection_finalized_grade = null; }
+    if (verse.reflection_finalized_comment) { verse.reflection_finalized_comment = null; }
+    if (verse.comment_mod_loop_count) { verse.comment_mod_loop_count = 0; }
     reflectionUtils.setKey(verse, TRANSLATION_KEY, text);
 }
 

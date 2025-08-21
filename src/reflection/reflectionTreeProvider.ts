@@ -69,18 +69,32 @@ export class ReflectionTreeProvider implements vscode.TreeDataProvider<Reflectio
             // Root level items
             const items: ReflectionTreeItem[] = [];
 
-            // Add start reflection button
-            const startButton = new ReflectionTreeItem(
-                this.isReflectionRunning ? 'Reflection Running...' : 'Start Reflection',
-                vscode.TreeItemCollapsibleState.None,
-                'startButton',
-                this.isReflectionRunning ? undefined : {
-                    command: 'codex-reflection.startReflection',
-                    title: 'Start Reflection'
-                }
-            );
-            startButton.iconPath = new vscode.ThemeIcon(this.isReflectionRunning ? 'loading~spin' : 'play');
-            items.push(startButton);
+            // Add start/stop reflection button
+            if (this.isReflectionRunning) {
+                const stopButton = new ReflectionTreeItem(
+                    'Stop Reflection',
+                    vscode.TreeItemCollapsibleState.None,
+                    'stopButton',
+                    {
+                        command: 'codex-reflection.stopReflection',
+                        title: 'Stop Reflection'
+                    }
+                );
+                stopButton.iconPath = new vscode.ThemeIcon('stop');
+                items.push(stopButton);
+            } else {
+                const startButton = new ReflectionTreeItem(
+                    'Start Reflection',
+                    vscode.TreeItemCollapsibleState.None,
+                    'startButton',
+                    {
+                        command: 'codex-reflection.startReflection',
+                        title: 'Start Reflection'
+                    }
+                );
+                startButton.iconPath = new vscode.ThemeIcon('play');
+                items.push(startButton);
+            }
 
             // Add status section if there are messages or reflection is running
             if (this.statusMessages.length > 0 || this.isReflectionRunning) {

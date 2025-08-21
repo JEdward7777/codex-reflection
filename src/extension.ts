@@ -3,7 +3,7 @@
 import * as vscode from 'vscode';
 
 
-import { startReflectionWorker, quickTest, setReflectionTreeProvider, setReflectionLogsWebviewProvider } from "./reflection/reflection";
+import { startReflectionWorker, stopReflectionWorker, quickTest, setReflectionTreeProvider, setReflectionLogsWebviewProvider } from "./reflection/reflection";
 import { ReflectionTreeProvider } from "./reflection/reflectionTreeProvider";
 import { ReflectionWebviewProvider, openReportInWebview } from "./reflection/reflectionWebviewProvider";
 import { ReflectionLogsWebviewProvider } from "./reflection/reflectionLogsWebviewProvider";
@@ -84,6 +84,16 @@ export function activate(context: vscode.ExtensionContext) {
 				} catch (error) {
 					reflectionTreeProvider.addStatusMessage(`Error starting reflection: ${error}`);
 					reflectionTreeProvider.setReflectionRunning(false);
+				}
+			}),
+
+			vscode.commands.registerCommand('codex-reflection.stopReflection', async () => {
+				try {
+					stopReflectionWorker();
+					vscode.window.showInformationMessage('Reflection process stopped');
+				} catch (error) {
+					vscode.window.showErrorMessage(`Error stopping reflection: ${error}`);
+					reflectionTreeProvider.addStatusMessage(`Error stopping reflection: ${error}`);
 				}
 			}),
 
