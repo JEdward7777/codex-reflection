@@ -17,7 +17,7 @@ export function setReflectionLogsWebviewProvider(provider: any) {
 }
 
 export async function quickTest() {
-    console.log("debounce: 🧪 Starting addLogMessage test - sending 100 messages at 25ms intervals");
+    console.log("debounce: 🧪 Starting addLogMessage test - Phase 1: 500 messages at 25ms, Phase 2: 20 messages at 500ms");
 
     if (!reflectionLogsWebviewProvider) {
         vscode.window.showErrorMessage("Logs webview provider not available for testing");
@@ -30,43 +30,92 @@ export async function quickTest() {
     console.log("debounce: 🧹 Cleared existing logs");
 
     let messageCount = 0;
-    const totalMessages = 100;
-    const intervalMs = 7;
+    const phase1Messages = 1000;
+    const phase2Messages = 20;
+    const totalMessages = phase1Messages + phase2Messages;
+    const fastIntervalMs = 7;
+    const slowIntervalMs = 500;
 
-    console.log(`debounce: 📊 Test parameters: ${totalMessages} messages, ${intervalMs}ms intervals`);
-    console.log("debounce: 🚀 Starting message flood...");
+    console.log(`debounce: 📊 Test parameters:`);
+    console.log(`debounce:    - Phase 1: ${phase1Messages} messages at ${fastIntervalMs}ms intervals`);
+    console.log(`debounce:    - Phase 2: ${phase2Messages} messages at ${slowIntervalMs}ms intervals`);
+    console.log("debounce: 🚀 Starting Phase 1 - Fast message flood...");
 
     const startTime = Date.now();
+    let phase1EndTime: number;
 
-    const sendMessage = () => {
+    const sendFastMessage = () => {
         messageCount++;
         const timestamp = new Date().toISOString();
         const logData = {
-            message: `Test message ${messageCount} - Testing debouncing behavior`,
+            message: `FAST message ${messageCount} - Testing rapid debouncing behavior`,
             level: messageCount % 4 === 0 ? 'ERROR' : messageCount % 3 === 0 ? 'PROGRESS' : messageCount % 2 === 0 ? 'DEBUG' : 'INFO',
             timestamp: timestamp
         };
 
         // Log to console at the same time we send to addLogMessage
-        console.log(`debounce: 📤 [${messageCount}/${totalMessages}] Sending: "${logData.message}" (${logData.level}) at ${timestamp}`);
+        console.log(`debounce: 📤 [FAST ${messageCount}/${phase1Messages}] Sending: "${logData.message}" (${logData.level}) at ${timestamp}`);
+
+        // Send to the addLogMessage function
+        reflectionLogsWebviewProvider.addLogMessage(logData);
+
+        if (messageCount < phase1Messages) {
+            setTimeout(sendFastMessage, fastIntervalMs);
+        } else {
+            phase1EndTime = Date.now();
+            const phase1Time = phase1EndTime - startTime;
+            const expectedPhase1Time = phase1Messages * fastIntervalMs;
+
+            console.log("debounce: ✅ Phase 1 completed!");
+            console.log(`debounce: 📈 Phase 1 Statistics:`);
+            console.log(`debounce:    - Fast messages sent: ${phase1Messages}`);
+            console.log(`debounce:    - Fast interval: ${fastIntervalMs}ms`);
+            console.log(`debounce:    - Expected Phase 1 time: ${expectedPhase1Time}ms`);
+            console.log(`debounce:    - Actual Phase 1 time: ${phase1Time}ms`);
+            console.log(`debounce:    - Phase 1 time difference: ${phase1Time - expectedPhase1Time}ms`);
+
+            // Wait a moment for debouncing to settle, then start Phase 2
+            setTimeout(() => {
+                console.log("debounce: 🐌 Starting Phase 2 - Slow message flood...");
+                sendSlowMessage();
+            }, 1000); // 1 second pause between phases
+        }
+    };
+
+    const sendSlowMessage = () => {
+        messageCount++;
+        const timestamp = new Date().toISOString();
+        const logData = {
+            message: `SLOW message ${messageCount - phase1Messages} - Testing slow debouncing behavior`,
+            level: messageCount % 4 === 0 ? 'ERROR' : messageCount % 3 === 0 ? 'PROGRESS' : messageCount % 2 === 0 ? 'DEBUG' : 'INFO',
+            timestamp: timestamp
+        };
+
+        // Log to console at the same time we send to addLogMessage
+        console.log(`debounce: 📤 [SLOW ${messageCount - phase1Messages}/${phase2Messages}] Sending: "${logData.message}" (${logData.level}) at ${timestamp}`);
 
         // Send to the addLogMessage function
         reflectionLogsWebviewProvider.addLogMessage(logData);
 
         if (messageCount < totalMessages) {
-            setTimeout(sendMessage, intervalMs);
+            setTimeout(sendSlowMessage, slowIntervalMs);
         } else {
             const endTime = Date.now();
             const totalTime = endTime - startTime;
-            const expectedTime = totalMessages * intervalMs;
+            const phase2Time = endTime - phase1EndTime - 1000; // Subtract the 1 second pause
+            const expectedPhase2Time = phase2Messages * slowIntervalMs;
 
-            console.log("debounce: ✅ Test completed!");
-            console.log(`debounce: 📈 Statistics:`);
-            console.log(`debounce:    - Messages sent: ${totalMessages}`);
-            console.log(`debounce:    - Interval: ${intervalMs}ms`);
-            console.log(`debounce:    - Expected total time: ${expectedTime}ms`);
-            console.log(`debounce:    - Actual total time: ${totalTime}ms`);
-            console.log(`debounce:    - Time difference: ${totalTime - expectedTime}ms`);
+            console.log("debounce: ✅ Phase 2 completed!");
+            console.log(`debounce: 📈 Phase 2 Statistics:`);
+            console.log(`debounce:    - Slow messages sent: ${phase2Messages}`);
+            console.log(`debounce:    - Slow interval: ${slowIntervalMs}ms`);
+            console.log(`debounce:    - Expected Phase 2 time: ${expectedPhase2Time}ms`);
+            console.log(`debounce:    - Actual Phase 2 time: ${phase2Time}ms`);
+            console.log(`debounce:    - Phase 2 time difference: ${phase2Time - expectedPhase2Time}ms`);
+
+            console.log("debounce: 🏁 COMPLETE TEST SUMMARY:");
+            console.log(`debounce:    - Total messages sent: ${totalMessages}`);
+            console.log(`debounce:    - Total test time: ${totalTime}ms`);
 
             // Check final state
             setTimeout(() => {
@@ -77,17 +126,22 @@ export async function quickTest() {
                 if (finalLogs.length > 0) {
                     console.log(`debounce: 📝 First log: "${finalLogs[0].message}"`);
                     console.log(`debounce: 📝 Last log: "${finalLogs[finalLogs.length - 1].message}"`);
+
+                    // Count how many fast vs slow messages remain
+                    const fastMessages = finalLogs.filter((log: { message: string; level: string; timestamp: string; }) => log.message.includes('FAST')).length;
+                    const slowMessages = finalLogs.filter((log: { message: string; level: string; timestamp: string; }) => log.message.includes('SLOW')).length;
+                    console.log(`debounce: 📊 Remaining messages: ${fastMessages} FAST, ${slowMessages} SLOW`);
                 }
 
                 vscode.window.showInformationMessage(
-                    `addLogMessage test completed! Sent ${totalMessages} messages. Check console and logs panel for results.`
+                    `addLogMessage test completed! Sent ${totalMessages} messages (${phase1Messages} fast + ${phase2Messages} slow). Check console and logs panel for results.`
                 );
             }, 200); // Wait a bit for any final debounced updates
         }
     };
 
-    // Start the test
-    sendMessage();
+    // Start Phase 1
+    sendFastMessage();
 }
 
 export function startReflectionWorker() {
