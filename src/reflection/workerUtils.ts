@@ -1,6 +1,7 @@
 import { WorkerMessage } from "./reflectionTypes";
 import { parentPort } from "node:worker_threads";
 import { Uri } from "vscode";
+import * as path from "path";
 
 let nextRequestId: number = 0;
 
@@ -46,7 +47,13 @@ async function getWorkspaceFolders(): Promise<{ index: number, name: string, uri
 export async function getFirstWorkspaceFolder(): Promise<string> {
     const folders = await getWorkspaceFolders();
     const folder = folders && folders[0] ? folders[0].uri.path : '';
-    return folder;
+    
+    // Normalize the path for Windows - remove leading slash from Unix-style paths like /c:/...
+    if (process.platform === 'win32' && folder.match(/^\/[a-zA-Z]:/)) {
+        return path.normalize(folder.substring(1));
+    }
+    
+    return path.normalize(folder);
 }
 
 export async function getConfigurationOption(key: string): Promise<any> {
