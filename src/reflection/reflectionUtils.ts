@@ -465,3 +465,64 @@ export function getLlmUrl(apiKeys: Record<string, any>, config: Record<string, a
     }
     return null;
 }
+
+export interface IdToContent {
+    [id: string]: string;
+}
+
+export function notebookDataToIdToContent(noteBookData: any): IdToContent {
+    const cells = noteBookData['cells'] ?? [];
+
+    const result = cells.reduce((acc: IdToContent, cell: any) => {
+        const id = cell['metadata']?.['id'] ?? '';
+        const langId = cell['languageId'] ?? '';
+        if (id && langId !== 'paratext') {
+            const verse = cell['value'] ?? '';
+            const verseWithoutHtml = verse.replace(/<[^>]*>/g, '');
+            acc[id] = verseWithoutHtml;
+        }
+        return acc;
+    }, {} as IdToContent);
+
+    return result;
+}
+
+export async function loadNotebookData(workspaceFolder: string, filePath: string): Promise<IdToContent> {
+    const absoluteFilePath = path.join(workspaceFolder, filePath);
+    const fileContent = await fsPromises.readFile(absoluteFilePath);
+    const fileData = JSON.parse(fileContent.toString());
+    const verseData = notebookDataToIdToContent(fileData);
+    return verseData;
+}
+
+export async function convertFilePathToRelative(workspaceFolder: string, fileDictionary: { [filePath: string]: any; }): Promise<{ [relativePath: string]: any; }> {
+    const convertedDictionary: { [relativePath: string]: any; } = {};
+    for (const [filePath, data] of Object.entries(fileDictionary)) {
+        const relativePath = path.relative(workspaceFolder, filePath);
+        convertedDictionary[relativePath] = data;
+    }
+
+    return convertedDictionary;
+}
+
+export async function snarfCodexFiles(workspaceFolder: string, folder: string, extension: string): Promise<{ [filePath: string]: Date; }> {
+    const dir = path.join(workspaceFolder, folder);
+
+    const files = await fsPromises.readdir(dir);
+    const codexFiles = await Promise.all(
+        files
+            .filter(file => file.endsWith(extension))
+            .map(async file => {
+                const filePath = path.join(dir, file);
+                const stats = await fsPromises.stat(filePath);
+                const modTime: Date = stats.mtime;
+                return { [filePath]: modTime };
+            })
+    );
+
+    const result: { [filePath: string]: Date; } = {};
+    codexFiles.forEach(file => Object.assign(result, file));
+
+    const relativeResult = await convertFilePathToRelative(workspaceFolder, result);
+    return relativeResult;
+}

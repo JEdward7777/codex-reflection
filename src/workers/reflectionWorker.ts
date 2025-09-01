@@ -5,6 +5,7 @@ import * as fsPromises from 'fs/promises';
 import path from 'path';
 import { WorkerMessage } from '../reflection/reflectionTypes';
 import * as reflectionUtils from '../reflection/reflectionUtils';
+import { IdToContent } from '../reflection/reflectionUtils';
 import { getFirstWorkspaceFolder, getConfigurationOption, postMessageAndShowError, postMessageAndShowInfo } from "@/reflection/workerUtils";
 import { run as runHtmlReport } from '../reflection/outputFormatters/htmlReport';
 
@@ -86,9 +87,6 @@ interface JsonModTimes {
     };
 }
 
-interface IdToContent {
-    [id: string]: string;
-}
 
 interface ReflectionContentItem extends Record<string, unknown> {
     reflectionLoops?: { [id: string]: string; }[];
@@ -253,41 +251,6 @@ const TRANSLATION_KEY = ["fresh_translation", "text"];
 const TRANSLATION_COMMENT_KEY = ["translation_notes"];
 
 
-async function convertFilePathToRelative(fileDictionary: { [filePath: string]: any; }): Promise<{ [relativePath: string]: any; }> {
-    const firstFolder = await getFirstWorkspaceFolder();
-
-    const convertedDictionary: { [relativePath: string]: any; } = {};
-    for (const [filePath, data] of Object.entries(fileDictionary)) {
-        const relativePath = path.relative(firstFolder, filePath);
-        convertedDictionary[relativePath] = data;
-    }
-
-    return convertedDictionary;
-}
-
-async function snarfCodexFiles(folder: string, extension: string): Promise<{ [filePath: string]: Date; }> {
-    const workspaceFolder = await getFirstWorkspaceFolder();
-    const dir = path.join(workspaceFolder, folder);
-
-    const files = await fs.promises.readdir(dir);
-    const codexFiles = await Promise.all(
-        files
-            .filter(file => file.endsWith(extension))
-            .map(async file => {
-                const filePath = path.join(dir, file);
-                const stats = await fs.promises.stat(filePath);
-                const modTime: Date = stats.mtime;
-                return { [filePath]: modTime };
-            })
-    );
-
-    const result: { [filePath: string]: Date; } = {};
-    codexFiles.forEach(file => Object.assign(result, file));
-    //console.log("worker: codex files with modification times: ", result);
-
-    const relativeResult = await convertFilePathToRelative(result);
-    return relativeResult;
-}
 
 async function snarfSingleCodexFile(filePathArg: string): Promise<{ [relativePath: string]: Date; }> {
     const workspaceFolder = await getFirstWorkspaceFolder();
@@ -297,15 +260,16 @@ async function snarfSingleCodexFile(filePathArg: string): Promise<{ [relativePat
     }
     const stats = await fs.promises.stat(filePath);
     const modTime: Date = stats.mtime;
-    const relativeResult = await convertFilePathToRelative({ [filePath]: modTime });
+    const relativeResult = await reflectionUtils.convertFilePathToRelative(workspaceFolder, { [filePath]: modTime });
     return relativeResult;
 }
 
 async function listCodexFilesAndComments(): Promise<{ [filePath: string]: Date; }> {
     //Use snarfCodexFiles to get the source files from .project/sourceTexts
     //and the target files from files/target
-    const sourceFiles = await snarfCodexFiles('.project/sourceTexts', '.source');
-    const targetFiles = await snarfCodexFiles('files/target', '.codex');
+    const workspaceFolder = await getFirstWorkspaceFolder();
+    const sourceFiles = await reflectionUtils.snarfCodexFiles(workspaceFolder, '.project/sourceTexts', '.source');
+    const targetFiles = await reflectionUtils.snarfCodexFiles(workspaceFolder, 'files/target', '.codex');
     const commentFile = await snarfSingleCodexFile('.project/comments.json');
     // Combine the source and target files
     return { ...sourceFiles, ...targetFiles, ...commentFile };
@@ -383,32 +347,6 @@ async function getFilesToUpdate(trackingModTimes: { [filePath: string]: Tracking
         }, {} as { [file: string]: TrackingModTimes; });
 }
 
-function notebookDataToIdToContent(noteBookData: any): IdToContent {
-    const cells = noteBookData['cells'] ?? [];
-
-    const result = cells.reduce((acc: IdToContent, cell: any) => {
-        const id = cell['metadata']?.['id'] ?? '';
-        const langId = cell['languageId'] ?? '';
-        if (id && langId !== 'paratext') {
-            const verse = cell['value'] ?? '';
-            const verseWithoutHtml = verse.replace(/<[^>]*>/g, '');
-            acc[id] = verseWithoutHtml;
-        }
-        return acc;
-    }, {} as IdToContent);
-
-
-    return result;
-}
-
-async function loadNotebookData(filePath: string): Promise<IdToContent> {
-    //The file is a json file so go ahead and load it as such using fsPromises
-    const absoluteFilePath = path.join(await getFirstWorkspaceFolder(), filePath);
-    const fileContent = await fsPromises.readFile(absoluteFilePath);
-    const fileData = JSON.parse(fileContent.toString());
-    const verseData = notebookDataToIdToContent(fileData);
-    return verseData;
-}
 
 function getReferencedLine(id: string, reflectionContent: ReflectionContent, makeIfMissing = false): ReflectionContentItem | undefined {
     for (const line of reflectionContent) {
@@ -623,13 +561,14 @@ async function updateReflectionContentFromFile(reflectionContent: ReflectionCont
         const commentTouchedIds = await loadCommentsFromFile(filePath, config);
         touchedIds.push(...commentTouchedIds);
     } else {
-        const verseData = await loadNotebookData(filePath);
+        const workspaceFolder = await getFirstWorkspaceFolder();
+        const verseData = await reflectionUtils.loadNotebookData(workspaceFolder, filePath);
         for (const [id, content] of Object.entries(verseData)) {
             const isSource = filePath.includes('sourceTexts');
 
             //tracking touched IDs are still needed for if the source is changed so that the verse can be reset
             //and regrown for that case.
-            const somethingChanged = await updateReflectionContent(reflectionContent, id, content, isSource);
+            const somethingChanged = await updateReflectionContent(reflectionContent, id, content as string, isSource);
             if (somethingChanged && !touchedIds.includes(id)) {
                 touchedIds.push(id);
             }

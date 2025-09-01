@@ -1,13 +1,89 @@
 import * as vscode from 'vscode';
+import * as path from 'path';
+import * as reflectionUtils from './reflectionUtils';
 
 export class ReflectionSettingsWebviewProvider implements vscode.WebviewViewProvider {
     public static readonly viewType = 'codex-reflection.settingsView';
 
     private _view?: vscode.WebviewView;
+    private _referenceCache: string[] | null = null;
+    private _cacheTimestamp: number = 0;
 
     constructor(
         private readonly _extensionUri: vscode.Uri,
     ) { }
+
+    private _getWorkspaceFolder(): string {
+        const folder = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+        if (!folder) {
+            throw new Error('No workspace folder found');
+        }
+
+        // Normalize the path for Windows - remove leading slash from Unix-style paths like /c:/...
+        if (process.platform === 'win32' && folder.match(/^\/[a-zA-Z]:/)) {
+            return path.normalize(folder.substring(1));
+        }
+
+        return path.normalize(folder);
+    }
+
+    private async _scanForReferences(): Promise<string[]> {
+        try {
+            const workspaceFolder = this._getWorkspaceFolder();
+
+            // Scan source files
+            const sourceFiles = await reflectionUtils.snarfCodexFiles(workspaceFolder, '.project/sourceTexts', '.source');
+
+            // Scan target files
+            const targetFiles = await reflectionUtils.snarfCodexFiles(workspaceFolder, 'files/target', '.codex');
+
+            // Extract all verse references from the files
+            const allReferences: string[] = [];
+
+            // Process source files
+            for (const [relativePath] of Object.entries(sourceFiles)) {
+                try {
+                    const verseData = await reflectionUtils.loadNotebookData(workspaceFolder, relativePath);
+                    allReferences.push(...Object.keys(verseData));
+                } catch (error) {
+                    console.warn(`Failed to load source file ${relativePath}:`, error);
+                }
+            }
+
+            // Process target files
+            for (const [relativePath] of Object.entries(targetFiles)) {
+                try {
+                    const verseData = await reflectionUtils.loadNotebookData(workspaceFolder, relativePath);
+                    allReferences.push(...Object.keys(verseData));
+                } catch (error) {
+                    console.warn(`Failed to load target file ${relativePath}:`, error);
+                }
+            }
+
+            // Remove duplicates and sort
+            const uniqueReferences = [...new Set(allReferences)].sort();
+
+            return uniqueReferences;
+        } catch (error) {
+            console.error('Error scanning for references:', error);
+            return [];
+        }
+    }
+
+    private async _getReferences(): Promise<string[]> {
+        const now = Date.now();
+
+        // Check if cache is still valid (5 minute cache)
+        if (this._referenceCache && (now - this._cacheTimestamp) < 300000) {
+            return this._referenceCache;
+        }
+
+        // Scan for fresh references
+        this._referenceCache = await this._scanForReferences();
+        this._cacheTimestamp = now;
+
+        return this._referenceCache;
+    }
 
     public resolveWebviewView(
         webviewView: vscode.WebviewView,
@@ -38,6 +114,9 @@ export class ReflectionSettingsWebviewProvider implements vscode.WebviewViewProv
                     case 'webviewReady':
                         // Webview is ready, send current settings
                         await this._sendCurrentSettings();
+                        break;
+                    case 'requestReferences':
+                        await this._sendReferences();
                         break;
                 }
             },
@@ -92,6 +171,24 @@ export class ReflectionSettingsWebviewProvider implements vscode.WebviewViewProv
                     error: error
                 });
             }
+        }
+    }
+
+    private async _sendReferences() {
+        if (!this._view) return;
+
+        try {
+            const references = await this._getReferences();
+            this._view.webview.postMessage({
+                command: 'referencesLoaded',
+                references: references
+            });
+        } catch (error) {
+            console.error('Error sending references:', error);
+            this._view.webview.postMessage({
+                command: 'referencesError',
+                error: error instanceof Error ? error.message : 'Unknown error'
+            });
         }
     }
 
@@ -274,6 +371,84 @@ export class ReflectionSettingsWebviewProvider implements vscode.WebviewViewProv
             opacity: 0.6;
             pointer-events: none;
         }
+
+        .reference-loading {
+            font-size: 11px;
+            color: var(--vscode-descriptionForeground);
+            margin-top: 4px;
+            font-style: italic;
+        }
+
+        /* Fix datalist dropdown styling */
+        datalist {
+            background: var(--vscode-quickInput-background);
+            border: 1px solid var(--vscode-widget-border);
+            border-radius: 3px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 1000;
+        }
+
+        datalist option {
+            padding: 4px 8px;
+            color: var(--vscode-foreground);
+            background: var(--vscode-quickInput-background);
+            border: none;
+            cursor: pointer;
+        }
+
+        datalist option:hover {
+            background: var(--vscode-list-hoverBackground);
+        }
+
+        /* Alternative: Hide native datalist and use custom dropdown */
+        .custom-dropdown {
+            position: relative;
+            display: inline-block;
+            width: 100%;
+        }
+
+        .custom-dropdown input {
+            width: 100%;
+            position: relative;
+            z-index: 1;
+        }
+
+        .dropdown-options {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: var(--vscode-quickInput-background);
+            border: 1px solid var(--vscode-widget-border);
+            border-radius: 3px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 1000;
+            display: none;
+        }
+
+        .dropdown-options.show {
+            display: block;
+        }
+
+        .dropdown-option {
+            padding: 6px 8px;
+            color: var(--vscode-foreground);
+            cursor: pointer;
+            border-bottom: 1px solid var(--vscode-list-inactiveSelectionBackground);
+        }
+
+        .dropdown-option:hover,
+        .dropdown-option.selected {
+            background: var(--vscode-list-hoverBackground);
+        }
+
+        .dropdown-option:last-child {
+            border-bottom: none;
+        }
     </style>
 </head>
 <body>
@@ -293,12 +468,26 @@ export class ReflectionSettingsWebviewProvider implements vscode.WebviewViewProv
 
             <div class="setting-group">
                 <label class="setting-label" for="firstVerseRef">First Verse Reference</label>
-                <input type="text" id="firstVerseRef" class="setting-input" placeholder="e.g., GEN 1:1">
+                <div class="custom-dropdown">
+                    <input type="text" id="firstVerseRef" class="setting-input" placeholder="e.g., GEN 1:1" autocomplete="off">
+                    <div class="dropdown-options" id="firstVerseDropdown">
+                        <!-- Options populated dynamically -->
+                    </div>
+                </div>
             </div>
 
             <div class="setting-group">
                 <label class="setting-label" for="lastVerseRef">Last Verse Reference</label>
-                <input type="text" id="lastVerseRef" class="setting-input" placeholder="e.g., REV 22:21">
+                <div class="custom-dropdown">
+                    <input type="text" id="lastVerseRef" class="setting-input" placeholder="e.g., REV 22:21" autocomplete="off">
+                    <div class="dropdown-options" id="lastVerseDropdown">
+                        <!-- Options populated dynamically -->
+                    </div>
+                </div>
+            </div>
+
+            <div id="referenceLoading" class="reference-loading" style="display: none;">
+                Loading verse references...
             </div>
 
             <div class="setting-group">
@@ -530,6 +719,9 @@ export class ReflectionSettingsWebviewProvider implements vscode.WebviewViewProv
         // Signal that webview is ready
         window.addEventListener('load', () => {
             vscode.postMessage({ command: 'webviewReady' });
+            // Request references for autocomplete
+            showReferenceLoading();
+            vscode.postMessage({ command: 'requestReferences' });
         });
 
         // Listen for messages from extension
@@ -539,8 +731,180 @@ export class ReflectionSettingsWebviewProvider implements vscode.WebviewViewProv
                 case 'updateSettings':
                     updateSettings(message.settings);
                     break;
+                case 'referencesLoaded':
+                    hideReferenceLoading();
+                    populateReferenceOptions(message.references);
+                    break;
+                case 'referencesError':
+                    hideReferenceLoading();
+                    console.error('Error loading references:', message.error);
+                    showReferenceError(message.error);
+                    break;
             }
         });
+
+        function showReferenceLoading() {
+            const loadingEl = document.getElementById('referenceLoading');
+            if (loadingEl) {
+                loadingEl.style.display = 'block';
+                loadingEl.textContent = 'Loading verse references...';
+            }
+        }
+
+        function hideReferenceLoading() {
+            const loadingEl = document.getElementById('referenceLoading');
+            if (loadingEl) {
+                loadingEl.style.display = 'none';
+            }
+        }
+
+        function showReferenceError(error) {
+            const loadingEl = document.getElementById('referenceLoading');
+            if (loadingEl) {
+                loadingEl.style.display = 'block';
+                loadingEl.textContent = 'Error loading references: ' + error;
+                loadingEl.style.color = 'var(--vscode-errorForeground)';
+            }
+        }
+
+        let allReferences = [];
+        let selectedIndex = -1;
+
+        function populateReferenceOptions(references) {
+            allReferences = references;
+            setupDropdownListeners();
+        }
+
+        function setupDropdownListeners() {
+            const firstInput = document.getElementById('firstVerseRef');
+            const lastInput = document.getElementById('lastVerseRef');
+            const firstDropdown = document.getElementById('firstVerseDropdown');
+            const lastDropdown = document.getElementById('lastVerseDropdown');
+
+            if (!firstInput || !lastInput || !firstDropdown || !lastDropdown) return;
+
+            // Setup event listeners for both inputs
+            setupInputListeners(firstInput, firstDropdown);
+            setupInputListeners(lastInput, lastDropdown);
+        }
+
+        function setupInputListeners(input, dropdown) {
+            input.addEventListener('input', (e) => {
+                filterAndShowOptions(input, dropdown, input.value);
+            });
+
+            input.addEventListener('focus', () => {
+                if (input.value.trim() === '') {
+                    showAllOptions(dropdown);
+                } else {
+                    filterAndShowOptions(input, dropdown, input.value);
+                }
+            });
+
+            input.addEventListener('blur', () => {
+                // Delay hiding to allow for option selection
+                setTimeout(() => {
+                    hideDropdown(dropdown);
+                }, 150);
+            });
+
+            input.addEventListener('keydown', (e) => {
+                handleKeydown(e, input, dropdown);
+            });
+        }
+
+        function filterAndShowOptions(input, dropdown, query) {
+            const filteredRefs = allReferences.filter(ref =>
+                ref.toLowerCase().includes(query.toLowerCase())
+            ).slice(0, 10); // Limit to 10 results
+
+            showOptions(dropdown, filteredRefs, query);
+        }
+
+        function showAllOptions(dropdown) {
+            const limitedRefs = allReferences.slice(0, 10);
+            showOptions(dropdown, limitedRefs, '');
+        }
+
+        function showOptions(dropdown, references, query) {
+            dropdown.innerHTML = '';
+
+            if (references.length === 0) {
+                const noResults = document.createElement('div');
+                noResults.className = 'dropdown-option';
+                noResults.textContent = 'No matches found';
+                dropdown.appendChild(noResults);
+            } else {
+                references.forEach((ref, index) => {
+                    const option = document.createElement('div');
+                    option.className = 'dropdown-option';
+                    option.textContent = ref;
+
+                    // Highlight matching text
+                    if (query) {
+                        const regex = new RegExp('(' + query + ')', 'gi');
+                        option.innerHTML = ref.replace(regex, '<strong>$1</strong>');
+                    }
+
+                    option.addEventListener('mousedown', () => {
+                        const input = dropdown.previousElementSibling;
+                        if (input) {
+                            input.value = ref;
+                            hideDropdown(dropdown);
+                            input.blur();
+                        }
+                    });
+
+                    dropdown.appendChild(option);
+                });
+            }
+
+            dropdown.classList.add('show');
+            selectedIndex = -1;
+        }
+
+        function hideDropdown(dropdown) {
+            dropdown.classList.remove('show');
+            selectedIndex = -1;
+        }
+
+        function handleKeydown(e, input, dropdown) {
+            const options = dropdown.querySelectorAll('.dropdown-option');
+
+            switch (e.key) {
+                case 'ArrowDown':
+                    e.preventDefault();
+                    selectedIndex = Math.min(selectedIndex + 1, options.length - 1);
+                    updateSelection(options);
+                    break;
+                case 'ArrowUp':
+                    e.preventDefault();
+                    selectedIndex = Math.max(selectedIndex - 1, -1);
+                    updateSelection(options);
+                    break;
+                case 'Enter':
+                    e.preventDefault();
+                    if (selectedIndex >= 0 && options[selectedIndex]) {
+                        input.value = options[selectedIndex].textContent || '';
+                        hideDropdown(dropdown);
+                    }
+                    break;
+                case 'Escape':
+                    hideDropdown(dropdown);
+                    input.blur();
+                    break;
+            }
+        }
+
+        function updateSelection(options) {
+            options.forEach((option, index) => {
+                if (index === selectedIndex) {
+                    option.classList.add('selected');
+                } else {
+                    option.classList.remove('selected');
+                }
+            });
+        }
     </script>
 </body>
 </html>`;
