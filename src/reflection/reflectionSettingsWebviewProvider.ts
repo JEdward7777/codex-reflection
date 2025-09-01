@@ -108,6 +108,7 @@ export class ReflectionSettingsWebviewProvider implements vscode.WebviewViewProv
             box-sizing: border-box;
             display: flex;
             flex-direction: column;
+            position: relative;
         }
 
         .header {
@@ -117,6 +118,12 @@ export class ReflectionSettingsWebviewProvider implements vscode.WebviewViewProv
             margin-bottom: 12px;
             padding-bottom: 6px;
             border-bottom: 1px solid var(--vscode-panel-border);
+        }
+
+        .settings-content {
+            flex: 1;
+            overflow-y: auto;
+            padding-bottom: 80px; /* Space for fixed save button */
         }
 
         .setting-group {
@@ -167,6 +174,17 @@ export class ReflectionSettingsWebviewProvider implements vscode.WebviewViewProv
             border-color: var(--vscode-focusBorder);
         }
 
+        .save-section {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: var(--vscode-editor-background);
+            border-top: 1px solid var(--vscode-panel-border);
+            padding: 12px;
+            box-sizing: border-box;
+        }
+
         .save-button {
             background: var(--vscode-button-background);
             color: var(--vscode-button-foreground);
@@ -175,7 +193,6 @@ export class ReflectionSettingsWebviewProvider implements vscode.WebviewViewProv
             font-size: 12px;
             cursor: pointer;
             border-radius: 3px;
-            margin-top: 8px;
             width: 100%;
         }
 
@@ -186,6 +203,23 @@ export class ReflectionSettingsWebviewProvider implements vscode.WebviewViewProv
         .save-button:disabled {
             opacity: 0.6;
             cursor: not-allowed;
+        }
+
+        .unsaved-indicator {
+            color: var(--vscode-notificationsWarningIcon-foreground);
+            font-size: 11px;
+            margin-bottom: 8px;
+            font-style: italic;
+        }
+
+        .setting-input.unsaved {
+            border-color: var(--vscode-notificationsWarningIcon-foreground);
+            background-color: var(--vscode-inputValidation-warningBackground);
+        }
+
+        .setting-textarea.unsaved {
+            border-color: var(--vscode-notificationsWarningIcon-foreground);
+            background-color: var(--vscode-inputValidation-warningBackground);
         }
 
         .status-message {
@@ -216,29 +250,35 @@ export class ReflectionSettingsWebviewProvider implements vscode.WebviewViewProv
 <body>
     <div class="header">Reflection Settings</div>
 
-    <div id="settingsContainer" class="loading">
-        <div class="setting-group">
-            <label class="setting-label" for="openAIKey">OpenAI API Key</label>
-            <input type="password" id="openAIKey" class="setting-input" placeholder="Enter your OpenAI API key">
-        </div>
+    <div class="settings-content">
+        <div id="settingsContainer" class="loading">
+            <div class="setting-group">
+                <label class="setting-label" for="openAIKey">OpenAI API Key</label>
+                <input type="password" id="openAIKey" class="setting-input" placeholder="Enter your OpenAI API key">
+            </div>
 
-        <div class="setting-group">
-            <label class="setting-label" for="firstVerseRef">First Verse Reference</label>
-            <input type="text" id="firstVerseRef" class="setting-input" placeholder="e.g., GEN 1:1">
-        </div>
+            <div class="setting-group">
+                <label class="setting-label" for="firstVerseRef">First Verse Reference</label>
+                <input type="text" id="firstVerseRef" class="setting-input" placeholder="e.g., GEN 1:1">
+            </div>
 
-        <div class="setting-group">
-            <label class="setting-label" for="lastVerseRef">Last Verse Reference</label>
-            <input type="text" id="lastVerseRef" class="setting-input" placeholder="e.g., REV 22:21">
-        </div>
+            <div class="setting-group">
+                <label class="setting-label" for="lastVerseRef">Last Verse Reference</label>
+                <input type="text" id="lastVerseRef" class="setting-input" placeholder="e.g., REV 22:21">
+            </div>
 
-        <div class="setting-group">
-            <label class="setting-label" for="translationObjective">Translation Objective</label>
-            <textarea id="translationObjective" class="setting-textarea" placeholder="Describe the translation objective..."></textarea>
+            <div class="setting-group">
+                <label class="setting-label" for="translationObjective">Translation Objective</label>
+                <textarea id="translationObjective" class="setting-textarea" placeholder="Describe the translation objective..."></textarea>
+            </div>
         </div>
+    </div>
 
+    <div class="save-section">
+        <div id="unsavedIndicator" class="unsaved-indicator" style="display: none;">
+            You have unsaved changes
+        </div>
         <button id="saveButton" class="save-button">Save Settings</button>
-
         <div id="statusMessage"></div>
     </div>
 
@@ -254,19 +294,76 @@ export class ReflectionSettingsWebviewProvider implements vscode.WebviewViewProv
         const saveButton = document.getElementById('saveButton');
         const statusMessage = document.getElementById('statusMessage');
         const settingsContainer = document.getElementById('settingsContainer');
+        const unsavedIndicator = document.getElementById('unsavedIndicator');
+
+        let autoSaveTimeout = null;
+        const AUTO_SAVE_DELAY = 1000; // 1 second delay
 
         // Event listeners
         saveButton.addEventListener('click', saveAllSettings);
 
-        // Input change tracking
+        // Input change tracking and auto-save
         [openAIKeyInput, firstVerseRefInput, lastVerseRefInput, translationObjectiveTextarea].forEach(input => {
-            input.addEventListener('input', updateSaveButton);
+            input.addEventListener('input', () => {
+                updateSaveButton();
+                scheduleAutoSave();
+            });
+            input.addEventListener('blur', () => {
+                // Auto-save when user leaves the field
+                clearTimeout(autoSaveTimeout);
+                autoSave();
+            });
         });
 
         function updateSaveButton() {
             const hasChanges = checkForChanges();
             saveButton.disabled = !hasChanges;
             saveButton.textContent = hasChanges ? 'Save Settings' : 'Settings Saved';
+
+            // Show/hide unsaved indicator
+            if (hasChanges) {
+                unsavedIndicator.style.display = 'block';
+                // Add unsaved class to changed inputs
+                updateUnsavedIndicators();
+            } else {
+                unsavedIndicator.style.display = 'none';
+                // Remove unsaved class from all inputs
+                [openAIKeyInput, firstVerseRefInput, lastVerseRefInput, translationObjectiveTextarea].forEach(input => {
+                    input.classList.remove('unsaved');
+                });
+            }
+        }
+
+        function updateUnsavedIndicators() {
+            const currentValues = {
+                openAIKey: openAIKeyInput.value,
+                firstVerseRef: firstVerseRefInput.value,
+                lastVerseRef: lastVerseRefInput.value,
+                translationObjective: translationObjectiveTextarea.value
+            };
+
+            openAIKeyInput.classList.toggle('unsaved', currentValues.openAIKey !== currentSettings.openAIKey);
+            firstVerseRefInput.classList.toggle('unsaved', currentValues.firstVerseRef !== currentSettings.firstVerseRef);
+            lastVerseRefInput.classList.toggle('unsaved', currentValues.lastVerseRef !== currentSettings.lastVerseRef);
+            translationObjectiveTextarea.classList.toggle('unsaved', currentValues.translationObjective !== currentSettings.translationObjective);
+        }
+
+        function scheduleAutoSave() {
+            clearTimeout(autoSaveTimeout);
+            autoSaveTimeout = setTimeout(() => {
+                autoSave();
+            }, AUTO_SAVE_DELAY);
+        }
+
+        async function autoSave() {
+            if (!checkForChanges()) return;
+
+            try {
+                await saveAllSettings(false); // isManualSave = false
+            } catch (error) {
+                // Auto-save failed, user will see error in status
+                console.error('Auto-save failed:', error);
+            }
         }
 
         function checkForChanges() {
@@ -280,7 +377,7 @@ export class ReflectionSettingsWebviewProvider implements vscode.WebviewViewProv
             return JSON.stringify(currentValues) !== JSON.stringify(currentSettings);
         }
 
-        async function saveAllSettings() {
+        async function saveAllSettings(isManualSave = true) {
             const settings = {
                 'codex-reflection.openAIKey': openAIKeyInput.value,
                 'codex-reflection.firstVerseRef': firstVerseRefInput.value,
@@ -288,10 +385,12 @@ export class ReflectionSettingsWebviewProvider implements vscode.WebviewViewProv
                 'codex-reflection.translationObjective': translationObjectiveTextarea.value
             };
 
-            saveButton.disabled = true;
-            saveButton.textContent = 'Saving...';
-            statusMessage.textContent = '';
-            statusMessage.className = '';
+            if (isManualSave) {
+                saveButton.disabled = true;
+                saveButton.textContent = 'Saving...';
+                statusMessage.textContent = '';
+                statusMessage.className = '';
+            }
 
             try {
                 // Save each setting
@@ -299,18 +398,25 @@ export class ReflectionSettingsWebviewProvider implements vscode.WebviewViewProv
                     await saveSetting(key, value);
                 }
 
-                showStatus('Settings saved successfully!', 'success');
-                saveButton.textContent = 'Settings Saved';
+                if (isManualSave) {
+                    showStatus('Settings saved successfully!', 'success');
+                    saveButton.textContent = 'Settings Saved';
+                }
                 currentSettings = {
                     openAIKey: openAIKeyInput.value,
                     firstVerseRef: firstVerseRefInput.value,
                     lastVerseRef: lastVerseRefInput.value,
                     translationObjective: translationObjectiveTextarea.value
                 };
+                updateSaveButton(); // This will hide the unsaved indicator
             } catch (error) {
-                showStatus('Error saving settings: ' + error.message, 'error');
-                saveButton.disabled = false;
-                saveButton.textContent = 'Save Settings';
+                if (isManualSave) {
+                    showStatus('Error saving settings: ' + error.message, 'error');
+                    saveButton.disabled = false;
+                    saveButton.textContent = 'Save Settings';
+                } else {
+                    console.error('Auto-save failed:', error);
+                }
             }
         }
 
@@ -349,11 +455,16 @@ export class ReflectionSettingsWebviewProvider implements vscode.WebviewViewProv
 
         // Update form with current settings
         function updateSettings(settings) {
-            currentSettings = { ...settings };
-            openAIKeyInput.value = settings.openAIKey || '';
-            firstVerseRefInput.value = settings.firstVerseRef || '';
-            lastVerseRefInput.value = settings.lastVerseRef || '';
-            translationObjectiveTextarea.value = settings.translationObjective || '';
+            currentSettings = {
+                openAIKey: settings.openAIKey || '',
+                firstVerseRef: settings.firstVerseRef || '',
+                lastVerseRef: settings.lastVerseRef || '',
+                translationObjective: settings.translationObjective || ''
+            };
+            openAIKeyInput.value = currentSettings.openAIKey;
+            firstVerseRefInput.value = currentSettings.firstVerseRef;
+            lastVerseRefInput.value = currentSettings.lastVerseRef;
+            translationObjectiveTextarea.value = currentSettings.translationObjective;
             settingsContainer.classList.remove('loading');
             updateSaveButton();
         }
