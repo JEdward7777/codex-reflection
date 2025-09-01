@@ -85,10 +85,6 @@ export class ReflectionSettingsWebviewProvider implements vscode.WebviewViewProv
         return this._referenceCache;
     }
 
-    public isVisible(): boolean {
-        return this._view?.visible ?? false;
-    }
-
     public resolveWebviewView(
         webviewView: vscode.WebviewView,
         context: vscode.WebviewViewResolveContext,

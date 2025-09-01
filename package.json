@@ -36,7 +36,8 @@
           "type": "webview",
           "id": "codex-reflection.settingsView",
           "name": "Settings",
-          "icon": "$(settings-gear)"
+          "icon": "$(settings-gear)",
+          "when": "true"
         }
       ]
     },

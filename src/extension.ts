@@ -68,7 +68,6 @@ export function activate(context: vscode.ExtensionContext) {
 			)
 		);
 
-
 		const reflectionTreeProvider = new ReflectionTreeProvider(context);
 		vscode.window.createTreeView('codex-reflection-panel', {
 			treeDataProvider: reflectionTreeProvider,
@@ -141,12 +140,7 @@ export function activate(context: vscode.ExtensionContext) {
 			}),
 
 			vscode.commands.registerCommand('codex-reflection.openSettings', async () => {
-				if (settingsWebviewProvider.isVisible()) {
-					// Focus the tree view to "collapse" settings
-					await vscode.commands.executeCommand('workbench.view.codex-reflection-panel.focus');
-				} else {
-					await vscode.commands.executeCommand('workbench.view.codex-reflection.settingsView.focus');
-				}
+				await vscode.commands.executeCommand('codex-reflection.settingsView.focus');
 			})
 		);
 	} catch (error) {
