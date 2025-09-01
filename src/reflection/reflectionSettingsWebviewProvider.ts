@@ -67,9 +67,14 @@ export class ReflectionSettingsWebviewProvider implements vscode.WebviewViewProv
 
     private async _saveSetting(key: string, value: any) {
         try {
-            // Save to workspace scope instead of global user scope
-            await vscode.workspace.getConfiguration().update(key, value, vscode.ConfigurationTarget.Workspace);
-            // Send confirmation back to webview
+            // Check if the setting is already the correct value to avoid unnecessary saves
+            const currentValue = await this._getConfigurationOption(key);
+            if (currentValue !== value) {
+                // Only update if the value has actually changed
+                await vscode.workspace.getConfiguration().update(key, value, vscode.ConfigurationTarget.Workspace);
+            }
+
+            // Send confirmation back to webview (whether we saved or not)
             if (this._view) {
                 this._view.webview.postMessage({
                     command: 'settingSaved',
