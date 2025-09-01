@@ -7,6 +7,7 @@ import { startReflectionWorker, stopReflectionWorker, quickTest, setReflectionTr
 import { ReflectionTreeProvider } from "./reflection/reflectionTreeProvider";
 import { ReflectionWebviewProvider, openReportInWebview } from "./reflection/reflectionWebviewProvider";
 import { ReflectionLogsWebviewProvider } from "./reflection/reflectionLogsWebviewProvider";
+import { ReflectionSettingsWebviewProvider } from "./reflection/reflectionSettingsWebviewProvider";
 
 
 // This method is called when your extension is activated
@@ -55,6 +56,15 @@ export function activate(context: vscode.ExtensionContext) {
 			vscode.window.registerWebviewViewProvider(
 				ReflectionLogsWebviewProvider.viewType,
 				logsWebviewProvider
+			)
+		);
+
+		// Register the settings webview provider
+		const settingsWebviewProvider = new ReflectionSettingsWebviewProvider(context.extensionUri);
+		context.subscriptions.push(
+			vscode.window.registerWebviewViewProvider(
+				ReflectionSettingsWebviewProvider.viewType,
+				settingsWebviewProvider
 			)
 		);
 
@@ -127,6 +137,10 @@ export function activate(context: vscode.ExtensionContext) {
 						vscode.window.showInformationMessage(`Report exported to ${saveUri.fsPath}`);
 					}
 				}
+			}),
+
+			vscode.commands.registerCommand('codex-reflection.openSettings', async () => {
+				await vscode.commands.executeCommand('codex-reflection.settingsView.focus');
 			})
 		);
 	} catch (error) {

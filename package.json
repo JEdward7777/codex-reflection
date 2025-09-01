@@ -31,6 +31,13 @@
           "name": "Logs",
           "icon": "$(output)",
           "when": "true"
+        },
+        {
+          "type": "webview",
+          "id": "codex-reflection.settingsView",
+          "name": "Settings",
+          "icon": "$(settings-gear)",
+          "when": "true"
         }
       ]
     },

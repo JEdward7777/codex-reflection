@@ -107,6 +107,19 @@ export class ReflectionTreeProvider implements vscode.TreeDataProvider<Reflectio
                 items.push(statusItem);
             }
 
+            // Add settings section
+            const settingsItem = new ReflectionTreeItem(
+                'Settings',
+                vscode.TreeItemCollapsibleState.None,
+                'settingsButton',
+                {
+                    command: 'codex-reflection.openSettings',
+                    title: 'Open Settings'
+                }
+            );
+            settingsItem.iconPath = new vscode.ThemeIcon('settings-gear');
+            items.push(settingsItem);
+
             // Add reports section
             const reportsItem = new ReflectionTreeItem(
                 'Reports',
