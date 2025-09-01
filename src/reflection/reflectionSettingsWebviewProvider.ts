@@ -124,6 +124,29 @@ export class ReflectionSettingsWebviewProvider implements vscode.WebviewViewProv
             margin-bottom: 12px;
             padding-bottom: 6px;
             border-bottom: 1px solid var(--vscode-panel-border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .refresh-button {
+            background: none;
+            border: none;
+            color: var(--vscode-foreground);
+            cursor: pointer;
+            padding: 2px;
+            border-radius: 3px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .refresh-button:hover {
+            background: var(--vscode-toolbar-hoverBackground);
+        }
+
+        .refresh-icon {
+            font-size: 14px;
         }
 
         .settings-content {
@@ -254,7 +277,12 @@ export class ReflectionSettingsWebviewProvider implements vscode.WebviewViewProv
     </style>
 </head>
 <body>
-    <div class="header">Reflection Settings</div>
+    <div class="header">
+        <div>Reflection Settings</div>
+        <button class="refresh-button" id="refreshButton" title="Refresh settings">
+            <span class="refresh-icon">↻</span>
+        </button>
+    </div>
 
     <div class="settings-content">
         <div id="settingsContainer" class="loading">
@@ -301,12 +329,14 @@ export class ReflectionSettingsWebviewProvider implements vscode.WebviewViewProv
         const statusMessage = document.getElementById('statusMessage');
         const settingsContainer = document.getElementById('settingsContainer');
         const unsavedIndicator = document.getElementById('unsavedIndicator');
+        const refreshButton = document.getElementById('refreshButton');
 
         let autoSaveTimeout = null;
         const AUTO_SAVE_DELAY = 1000; // 1 second delay
 
         // Event listeners
         saveButton.addEventListener('click', saveAllSettings);
+        refreshButton.addEventListener('click', refreshSettings);
 
         // Input change tracking and auto-save
         [openAIKeyInput, firstVerseRefInput, lastVerseRefInput, translationObjectiveTextarea].forEach(input => {
@@ -369,6 +399,23 @@ export class ReflectionSettingsWebviewProvider implements vscode.WebviewViewProv
             } catch (error) {
                 // Auto-save failed, user will see error in status
                 console.error('Auto-save failed:', error);
+            }
+        }
+
+        async function refreshSettings() {
+            // Show loading state
+            settingsContainer.classList.add('loading');
+            refreshButton.disabled = true;
+            refreshButton.innerHTML = '<span class="refresh-icon">↻</span>';
+
+            try {
+                // Request fresh settings from extension
+                vscode.postMessage({ command: 'getSettings' });
+            } catch (error) {
+                console.error('Error refreshing settings:', error);
+                settingsContainer.classList.remove('loading');
+                refreshButton.disabled = false;
+                refreshButton.innerHTML = '<span class="refresh-icon">↻</span>';
             }
         }
 
@@ -472,6 +519,11 @@ export class ReflectionSettingsWebviewProvider implements vscode.WebviewViewProv
             lastVerseRefInput.value = currentSettings.lastVerseRef;
             translationObjectiveTextarea.value = currentSettings.translationObjective;
             settingsContainer.classList.remove('loading');
+
+            // Reset refresh button state
+            refreshButton.disabled = false;
+            refreshButton.innerHTML = '<span class="refresh-icon">↻</span>';
+
             updateSaveButton();
         }
 
