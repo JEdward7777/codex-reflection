@@ -24,6 +24,7 @@ The plugin emphasizes **quality checking** and grading of existing translations,
 - **Real-time Logging**: Monitor the reflection process with live output logs
 - **Multiple Viewing Options**: View reports in VSCodium webview or external browser
 - **Export Functionality**: Save and share portable HTML reports
+- **Integrated Settings Panel**: Settings management within the extension's interface
 
 ## Requirements
 
@@ -73,25 +74,25 @@ Before using Codex Reflection, configure these settings for Codex Reflection:
 
 ## Accessing Settings
 
-To configure the Codex Reflection settings:
+Codex Reflection provides two ways to configure settings:
 
-1. **Open Settings**:
-   - **Keyboard Shortcut**: `Ctrl + ,` (Control + Comma)
-   - **Menu Navigation**: Go to `File` → `Preferences` → `Settings`
-   - **Command Palette**: Press `Ctrl + Shift + P`, type "Preferences: Open Settings", and press Enter
+### Settings Panel
+1. Click the mirror icon in the Activity Bar to open the Reflection panel
+2. Click on "Settings" in the tree view to open the settings interface
 
-2. **Find Codex Reflection Settings**:
-   - In the Settings UI, search for "codex-reflection" in the search box
-   - All extension-specific settings will be displayed
-   - Click on "Extensions" in the sidebar, then select "Codex-Reflection" to see all available settings
+### VSCode Settings
+1. Press `Ctrl + ,` to open VSCode settings
+2. Search for "codex-reflection" to find the extension settings
+
+Both methods access the same settings and sync automatically.
 
 ## Usage
 
 1. **Open a Translation Project**: Use Codex Editor to open or create a translation project
 
-2. **Configure Settings**: Set your OpenAI API key and optionally define verse ranges and translation objectives
+2. **Configure Settings**: Set your OpenAI API key and optionally define verse ranges and translation objectives using either the settings panel or VSCode settings
 
-3. **Open Reflection Panel**: Click the mirror icon in the Activity Bar (alongside Explorer, Run and Debug, etc.)
+3. **Open Reflection Panel**: Click the mirror icon in the Activity Bar
 
 4. **Start Reflection**: Click the play button next to "Start Reflection"
 
